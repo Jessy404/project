@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
-import Home from '../screens/Home'; 
+import New from '../screens/New'; 
 export default function App() {
   return (
-    <Home/>
+    <New/>
   );
 }

@@ -1,8 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { View, FlatList, Text, Image, StyleSheet, TextInput, Pressable,TouchableOpacity } from 'react-native';
+import { View, FlatList, Text, Image, StyleSheet, TextInput, Pressable } from 'react-native';
 import { Card } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/FontAwesome';
 
 const products = [
     { id: '1', name: 'Insulin', image: 'https://domf5oio6qrcr.cloudfront.net/medialibrary/15900/gettyimages-1342010434.jpg' },
@@ -15,28 +14,25 @@ const products = [
 ];
 
 const ProductList = () => {
-    // هنا تعريف الـ state داخل الـ component
     const [searchText, setSearchText] = useState("");
-    const [isSearchVisible, setSearchVisible] = useState(false);
+
+    const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchText.toLowerCase())
+    );
 
     return (
         <View style={styles.container}>
-               <TouchableOpacity onPress={() => setSearchVisible(!isSearchVisible)}>
-          <FontAwesome name="search" size={24} color="#0A505B" />
-        </TouchableOpacity>
-            {isSearchVisible && (
-                <View style={styles.searchContainer}>
-                    <TextInput
-                        style={styles.searchInput}
-                        value={searchText}
-                        onChangeText={(text) => setSearchText(text)}
-                        placeholder="Search products..."
-                        placeholderTextColor="#888"
-                    />
-                </View>
-            )}
+            <View style={styles.searchContainer}>
+                <TextInput
+                    style={styles.searchInput}
+                    value={searchText}
+                    onChangeText={text => setSearchText(text)}
+                    placeholder="Search products..."
+                    placeholderTextColor="#888"
+                />
+            </View>
             <FlatList
-                data={products}
+                data={filteredProducts}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <Card style={styles.card}>
@@ -44,7 +40,7 @@ const ProductList = () => {
                         <View style={styles.textContainer}>
                             <Text style={styles.name}>{item.name}</Text>
                             <Pressable onPress={() => console.log('Add to cart pressed')}>
-                                <Icon name="plus" size={20} color="#000" />
+                                <FontAwesome name="plus" size={20} color="#000" />
                             </Pressable>
                         </View>
                     </Card>
@@ -80,6 +76,7 @@ const styles = StyleSheet.create({
     },
     searchContainer: {
         marginBottom: 16,
+        top: 20,
     },
     searchInput: {
         height: 40,
@@ -89,6 +86,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         fontSize: 14,
         color: "#333",
+        backgroundColor: "#fff"
     },
 });
 

@@ -1,102 +1,58 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { Image, StyleSheet, Platform ,Text } from 'react-native';
+import { HelloWave } from '@/components/HelloWave';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 
-const AboutUs = () => {
-  const teamMembers = [
-    { name: 'Yasmeen Ibrahim', code: '2027275', role: 'Team Leader' },
-    { name: 'Marwa Rabiaa', code: '2027275', role: 'Team Member' },
-    { name: 'Nada Mohamed', code: '2027275', role: 'Team Member' },
-    { name: 'Radwa Omar', code: '2027275', role: 'Team Member' },
-    { name: 'Rawan Ahmed', code: '2227564', role: 'Team Member' },
-    { name: 'Alaa Nasser', code: '2127454', role: 'Team Member' },
-    { name: 'Rawan Ahmed', code: '2227564', role: 'Team Member' },
-    { name: 'Alaa Nasser', code: '2127454', role: 'Team Member' }, 
-
-];
-
-
+export default function HomeScreen() {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color="#0A505B" />
-        </TouchableOpacity>
-        <Text style={styles.title}>About Us</Text>
-      </View>
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={{ uri: 'https://domf5oio6qrcr.cloudfront.net/medialibrary/15900/gettyimages-1342010434.jpg' }}
+          style={styles.reactLogo}
+        />
+      }>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Welcome medicine Reminder !</ThemedText>
+        <Text style={styles.content} > Welcome to medicine Reminder , your trusted companion for managing medications efficiently and effortlessly. Our app is designed to help users stay organized and take control of their health by providing essential features such as:
 
-      <View style={styles.teamContainer}>
-        {teamMembers.map((member, index) => (
-          <View key={index} style={styles.card}>
-            <Text style={styles.memberName}>{member.name}</Text>
-            <Text style={styles.memberRole}>{member.role}</Text>
-            <Text style={styles.memberCode}>Code: {member.code}</Text>
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+Medication Reminders – Get timely notifications to ensure you never miss a dose.
+Dosage Tracking – Keep a record of the medications you have taken and their prescribed dosages.
+Prescription Management – Store and access prescription details along with doctor’s instructions.
+Refill Alerts – Receive reminders when your medication supply is running low.
+Health Monitoring – Track symptoms and side effects over time for better health management.</Text>
+        {/* <HelloWave /> */}
+        
+      </ThemedView>
+    </ParallaxScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    // flexGrow: 1,
-    backgroundColor: '#F5F5F5',
-    paddingBottom: 20,
-    flex :1,
-  },
-  header: {
-    flexDirection: 'row',
+  titleContainer: {
+    // flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: '#fff',
-    elevation: 2,
+    gap: 8,
   },
-  backButton: {
-    padding: 10,
-    borderRadius: 50,
-    backgroundColor: '#E5FCFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  content:{
+    fontSize: 16,
     color: '#0A505B',
     textAlign: 'center',
-    flex: 1,
-  },
-  teamContainer: {
-    padding: 20,
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
-    marginBottom: 15,
-  },
-  memberName: {
-    fontSize: 18,
+    padding: 10,
     fontWeight: 'bold',
-    color: '#0A505B',
   },
-  memberRole: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 5,
-  },
-  memberCode: {
-    fontSize: 14,
-    color: '#777',
+  reactLogo: {
+    height: 300,
+    width: 500,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    position: 'absolute',
   },
 });
-
-export default AboutUs;
