@@ -12,11 +12,11 @@ const GetStarted = () => {
     >
       <View style={styles.overlay} />
       <View style={styles.content}>
-      <Image source={require('../../assets/images/logo1.png')} style={{width: 100, height: 100}} />
+      <Image source={require('../../assets/images/Logo.png')} style={{width: 100, height: 100}} />
         <Text style={styles.title}>Welcome to MedReminder</Text>
         <Text style={styles.subtitle}>Stay on track with your medications and never miss a dose again.</Text>
         
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/screens/home')}>
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/Account/signin')}>
           <Text style={styles.buttonText}>Get Started</Text>
         </TouchableOpacity>
       </View>
