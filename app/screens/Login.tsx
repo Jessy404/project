@@ -5,7 +5,7 @@ import { router } from 'expo-router'
 
 
 const handelSignin = () => {
-  router.replace('../(tabs)/home'); 
+  router.replace('../Account/register'); 
   }
 
 
