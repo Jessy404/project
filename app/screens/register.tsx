@@ -1,6 +1,6 @@
 import { StyleSheet, TextInput, Pressable, Dimensions , View , Text} from 'react-native';
 import { useState } from 'react';
-import { Link, router } from 'expo-router';
+import {  router } from 'expo-router';
 
 
 
