@@ -2,21 +2,16 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-
+import { router } from "expo-router";
 export default function LoginScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-<<<<<<< HEAD
 const handelSignin = () => {
   router.replace('../Account/register'); 
   }
 
-
-export default function Login() {
-=======
->>>>>>> 038cf620be23e18935cc601a1ecda0350ed3d477
   return (
     <ImageBackground source={require("../../assets/images/login-background.jpeg")} style={styles.background}>
 
@@ -54,7 +49,7 @@ export default function Login() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={handelSignin}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
 
