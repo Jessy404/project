@@ -13,8 +13,11 @@ export default function Register() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+
   const [phone, setPhone] = useState("")
+  
   const handelSignUp = () => {
+  
     router.replace('../(tabs)/home');
   }
 
