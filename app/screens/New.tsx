@@ -1,7 +1,9 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useState } from 'react';
+import { router } from 'expo-router';
 import { View, FlatList, Text, Image, StyleSheet, TextInput, Pressable } from 'react-native';
 import { Card } from 'react-native-paper';
+import { Item } from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
 
 const products = [
     { id: '1', name: 'Insulin', image: 'https://domf5oio6qrcr.cloudfront.net/medialibrary/15900/gettyimages-1342010434.jpg' },
@@ -15,10 +17,21 @@ const products = [
 
 const ProductList = () => {
     const [searchText, setSearchText] = useState("");
-
     const filteredProducts = products.filter(product => 
         product.name.toLowerCase().includes(searchText.toLowerCase())
     );
+    
+    const reset = () => {
+        router.replace('../(tabs)/new');
+        console.log('Screen restarted');
+      };
+
+     const del = () => {
+    //    products.pop(Item.id);
+        console.log('item is deleted');
+        products.filter(products=>products.id)
+
+      };
 
     return (
         <View style={styles.container}>
@@ -31,10 +44,19 @@ const ProductList = () => {
                     placeholderTextColor="#888"
                 />
             </View>
+
+
+          <Pressable  style={styles.button} onPress={reset}>
+            {/* pressed ? */}
+            <Text> Reset </Text>
+          </Pressable>
+
+            
             <FlatList
                 data={filteredProducts}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
+                    <Pressable onPress={del}>
                     <Card style={styles.card}>
                         <Image source={{ uri: item.image }} style={styles.image} />
                         <View style={styles.textContainer}>
@@ -44,8 +66,10 @@ const ProductList = () => {
                             </Pressable>
                         </View>
                     </Card>
+                    </Pressable>
                 )}
             />
+            
         </View>
     );
 };
@@ -88,6 +112,24 @@ const styles = StyleSheet.create({
         color: "#333",
         backgroundColor: "#fff"
     },
+    
+  button: {
+    marginTop: 40,
+    marginBottom: 10,
+    backgroundColor: "#062654",
+    height: 45,
+    // borderColor: "gray",
+    // borderWidth: 1,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    // borderRadius: 150,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold"
+  },
 });
 
 export default ProductList;
