@@ -57,6 +57,8 @@ export default function TabLayout() {
               <MaterialIcons
                 name={focused ? "add-circle" : "add-circle-outline"}
                 color={color}
+
+                
                 size={focused ? 30 : 25}
               />
             </View>
