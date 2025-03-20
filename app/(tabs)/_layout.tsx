@@ -34,7 +34,6 @@ export default function TabLayout() {
         },
       }}>
 
-      {/* شاشة Home */}
       <Tabs.Screen
         name="home"
         options={{
@@ -47,7 +46,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* شاشة New */}
+    
       <Tabs.Screen
         name="new"
         options={{
