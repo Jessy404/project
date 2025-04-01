@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { FontAwesome5 } from '@expo/vector-icons';
 
 const MyMedication = () => {
   const [medications, setMedications] = useState([
@@ -8,42 +9,23 @@ const MyMedication = () => {
     { id: "3", name: "Ibuprofen", time: "06:00 PM", dose: "400mg", taken: false },
   ]);
 
-  const handleTaken = (id : string) => {
-    setMedications((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, taken: true } : item))
-    );
+  const handleTaken = (id) => {
+    setMedications((prev) => prev.map((item) => (item.id === id ? { ...item, taken: true } : item)));
   };
 
-  const handleDelete = (id : string) => {
+  const handleDelete = (id) => {
     setMedications((prev) => prev.filter((item) => item.id !== id));
   };
-  type Medication = {
-    id: string;
-    name: string;
-    time: string;
-    dose: string;
-    taken: boolean;
-  };
-  
-  const renderItem = ({ item }: { item: Medication }) => {
-    const scaleAnim = new Animated.Value(1);
 
-    const handlePressIn = () => {
-      Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true }).start();
-    };
-
-    const handlePressOut = () => {
-      Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-    };
-
+  const renderItem = ({ item }) => {
     return (
-      <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
-        {item.taken && <Text style={styles.takenLabel}>✅ Taken</Text>}
-        <View style={styles.info}>
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <FontAwesome5 name="pills" size={20} color="#007AFF" style={styles.icon} />
           <Text style={styles.medName}>{item.name}</Text>
-          <Text style={styles.details}>Time: {item.time}</Text>
-          <Text style={styles.details}>Dose: {item.dose}</Text>
         </View>
+        <Text style={styles.details}><FontAwesome5 name="clock" /> {item.time}</Text>
+        <Text style={styles.details}><FontAwesome5 name="capsules" /> {item.dose}</Text>
         <View style={styles.buttons}>
           {!item.taken && (
             <TouchableOpacity style={[styles.button, styles.taken]} onPress={() => handleTaken(item.id)}>
@@ -53,16 +35,11 @@ const MyMedication = () => {
           <TouchableOpacity style={[styles.button, styles.edit]}>
             <Text style={styles.btnText}>Edit</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.delete]}
-            onPress={() => handleDelete(item.id)}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-          >
+          <TouchableOpacity style={[styles.button, styles.delete]} onPress={() => handleDelete(item.id)}>
             <Text style={styles.btnText}>Delete</Text>
           </TouchableOpacity>
         </View>
-      </Animated.View>
+      </View>
     );
   };
 
@@ -77,47 +54,44 @@ const MyMedication = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#162447",
+    backgroundColor: "#FFF",
     padding: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#E1EAF5",
+    color: "#062654",
     textAlign: "center",
     marginBottom: 20,
   },
   card: {
-    backgroundColor: "#1F4068",
+    backgroundColor: "#FFF",
     padding: 15,
     borderRadius: 12,
     marginBottom: 15,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
-    position: "relative",
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  takenLabel: {
-    position: "absolute",
-    top: 8,
-    right: 10,
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#21BF73",
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
   },
-  info: {
-    marginBottom: 10,
+  icon: {
+    marginRight: 8,
   },
   medName: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#FFF",
+    color: "#062654",
   },
   details: {
     fontSize: 14,
-    color: "#A9C1D9",
+    color: "#555",
+    marginBottom: 5,
   },
   buttons: {
     flexDirection: "row",
@@ -131,10 +105,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   taken: {
-    backgroundColor: "#21BF73",
+    backgroundColor: "#2265A2",
   },
   edit: {
-    backgroundColor: "#F4A261",
+    backgroundColor: "#7FADE0",
   },
   delete: {
     backgroundColor: "#E63946",
