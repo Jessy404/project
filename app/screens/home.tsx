@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, ScrollView } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-const medicinesData = {
+const medicinesData: Record<number, { id: string; name: string; time: string; dose: string; schedule: string; icon: keyof typeof MaterialCommunityIcons.glyphMap; status: string; }[]> = {
   7: [
     { id: "1", name: "Ibrupain", time: "7:00 PM", dose: "2 Tablets", schedule: "Before Sleeping", icon: "pill", status: "done" },
   ],
@@ -17,7 +18,7 @@ const medicinesData = {
   ],
 };
 
-const Calendar = ({ onSelectDate, selected }) => {
+const Calendar = ({ onSelectDate, selected }: { onSelectDate: (date: number) => void; selected: number }) => {
   const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
   const dates = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
@@ -43,7 +44,18 @@ const Calendar = ({ onSelectDate, selected }) => {
   );
 };
 
-const MedicineItem = ({ name, time, dose, schedule, icon, status }) => (
+import type { IconProps } from "@expo/vector-icons/build/createIconSet";
+
+interface MedicineItemProps {
+  name: string;
+  time: string;
+  dose: string;
+  schedule: string;
+  icon: IconProps<typeof MaterialCommunityIcons["name"]>["name"];
+  status: string;
+}
+
+const MedicineItem: React.FC<MedicineItemProps> = ({ name, time, dose, schedule, icon, status }) => (
   <View style={styles.item}>
     <MaterialCommunityIcons name={icon} size={30} color="#007BFF" style={styles.icon} />
     <View style={styles.details}>
@@ -70,15 +82,44 @@ const MedicineItem = ({ name, time, dose, schedule, icon, status }) => (
 const MedicineList = () => {
   const [selectedDate, setSelectedDate] = useState(7);
   const medicines = medicinesData[selectedDate] || [];
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
       <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
       <FlatList
-        data={medicines}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MedicineItem {...item} />}
-      />
+      ListHeaderComponent={
+        <View style={styles.calendarContainer}>
+          {Object.keys(medicinesData).map((date) => (
+            <TouchableOpacity key={date} style={[styles.dayContainer, selectedDate === Number(date) && styles.selectedDay]} onPress={() => setSelectedDate(Number(date))}>
+              <Text style={styles.dateText}>{date}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      }
+      data={medicines}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <View style={styles.item}>
+          <MaterialCommunityIcons name={item.icon as keyof typeof MaterialCommunityIcons.glyphMap} size={30} color="#007BFF" style={styles.icon} />
+          <View style={styles.details}>
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.schedule}>{item.schedule}</Text>
+            <Text style={styles.dose}>{item.dose}</Text>
+          </View>
+          <View style={styles.rightSection}>
+            <Text style={styles.time}>{item.time}</Text>
+            <Ionicons name={item.status === "done" ? "checkmark-done-circle-outline" : "alert-circle-outline"} size={28} color={item.status === "done" ? "green" : "red"} />
+          </View>
+        </View>
+      )}
+      ListFooterComponent={
+        <TouchableOpacity style={styles.addButton} onPress={() => router.push("/screens/AddNewMedication")}> 
+          <Ionicons name="add-circle" size={50} color="#007BFF" />
+        </TouchableOpacity>
+      }
+    />
+     
     </View>
   );
 };
@@ -171,7 +212,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 5,
   },
+  addButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+  },
 });
 
 export default MedicineList;
-
