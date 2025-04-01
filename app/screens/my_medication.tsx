@@ -8,17 +8,24 @@ const MyMedication = () => {
     { id: "3", name: "Ibuprofen", time: "06:00 PM", dose: "400mg", taken: false },
   ]);
 
-  const handleTaken = (id) => {
+  const handleTaken = (id : string) => {
     setMedications((prev) =>
       prev.map((item) => (item.id === id ? { ...item, taken: true } : item))
     );
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (id : string) => {
     setMedications((prev) => prev.filter((item) => item.id !== id));
   };
-
-  const renderItem = ({ item }) => {
+  type Medication = {
+    id: string;
+    name: string;
+    time: string;
+    dose: string;
+    taken: boolean;
+  };
+  
+  const renderItem = ({ item }: { item: Medication }) => {
     const scaleAnim = new Animated.Value(1);
 
     const handlePressIn = () => {
