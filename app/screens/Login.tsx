@@ -1,27 +1,36 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
+import React, { useState, useCallback } from "react";
+import { 
+  View, Text, TextInput, TouchableOpacity, 
+  StyleSheet, ImageBackground, KeyboardAvoidingView, Platform 
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+
 export default function LoginScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-const handelSignin = () => {
-  router.replace('../Account/register'); 
-  }
+  const handelSignin = useCallback(() => {
+    router.replace('../Account/register'); 
+  }, []);
 
   return (
-    <ImageBackground source={require("../../assets/images/login-background.jpeg")} style={styles.background}>
-
-      <View style={styles.container}>
+    <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        style={styles.container}
+      >
+      
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
 
-        <Text style={styles.title}>Welcome back</Text>
 
+        <Text style={styles.title}>Welcome Back</Text>
+
+  
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -40,6 +49,7 @@ const handelSignin = () => {
           onChangeText={setPassword}
         />
 
+
         <View style={styles.options}>
           <TouchableOpacity>
             <Text style={styles.rememberText}>Remember me</Text>
@@ -49,77 +59,70 @@ const handelSignin = () => {
           </TouchableOpacity>
         </View>
 
+   
         <TouchableOpacity style={styles.button} onPress={handelSignin}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
 
-        <Text style={styles.orText}>Sign in with</Text>
+        <Text style={styles.orText}>Or sign in with</Text>
         <View style={styles.socialIcons}>
           <Ionicons name="logo-facebook" size={28} color="#3b5998" />
           <Ionicons name="logo-google" size={28} color="#db4437" />
-          {/* <Ionicons name="logo-twitter" size={28} color="#1DA1F2" />
-          <Ionicons name="logo-apple" size={28} color="black" /> */}
         </View>
-{/*        
-        <TouchableOpacity onPress={() => navigation.navigate("register")}>
-          <Text style={styles.signupText}>Don't have an account? <Text style={{ fontWeight: "bold" }}>Sign up</Text></Text>
-        </TouchableOpacity> */}
-      </View>
+
+      
+        <TouchableOpacity onPress={() => router.replace("../Account/register")}>
+          <Text style={styles.signupText}>
+            Don't have an account? <Text style={styles.boldText}>Sign up</Text>
+          </Text>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
     </ImageBackground>
   );
 }
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    justifyContent: "flex-start", 
+    justifyContent: "center",
     alignItems: "center",
     resizeMode: "cover",
-    paddingTop: 50, 
   },
   container: {
-    width: "100%",
-    height: "85%", 
+    width: "90%",
     backgroundColor: "white",
     padding: 20,
-    borderTopLeftRadius: 50,  
-    borderTopRightRadius: 50,
-    borderBottomLeftRadius: 5,
-    borderBottomRightRadius: 5,
+    borderRadius: 40,
     alignItems: "center",
-    elevation: 10, 
-    shadowColor: "#000", 
-    shadowOffset: { width: 0, height: 5 }, 
-    shadowOpacity: 0.2, 
-    shadowRadius: 8, 
-    position: "absolute",
-    bottom: 0, 
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   backButton: {
     position: "absolute",
     top: 20,
     left: 20,
-    zIndex: 10, 
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#062654",
     marginBottom: 30,
-    marginTop: 20,
   },
   input: {
     width: "100%",
     padding: 15,
     borderWidth: 1,
-     borderColor: "#ddd",
+    borderColor: "#ddd",
     borderRadius: 25,
     backgroundColor: "#f9f9f9",
     marginBottom: 10,
-     elevation: 3,
     shadowColor: "#999",
     shadowOffset: { width: 0, height: 2 },
-     shadowOpacity: 0.1,
-     shadowRadius: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   options: {
     flexDirection: "row",
@@ -129,22 +132,17 @@ const styles = StyleSheet.create({
   },
   rememberText: {
     color: "#aaa",
-    marginTop:10,
   },
   forgotText: {
-    color:"#062654",
+    color: "#062654",
     fontWeight: "bold",
-    marginTop:10,
   },
   button: {
     backgroundColor: "#062654",
     padding: 15,
-    marginBottom:30,
-    marginTop:30,
     borderRadius: 25,
     width: "100%",
     alignItems: "center",
-    elevation: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
@@ -162,11 +160,15 @@ const styles = StyleSheet.create({
   socialIcons: {
     flexDirection: "row",
     justifyContent: "space-around",
-    width: "80%",
+    width: "60%",
     marginBottom: 15,
-    marginTop:10,
   },
   signupText: {
     color: "#777",
+    marginTop: 10,
+  },
+  boldText: {
+    fontWeight: "bold",
+    color: "#062654",
   },
 });
