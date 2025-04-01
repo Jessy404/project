@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
-import New from '../screens/New'; 
+import ChallengeScreen from '../screens/challenge'; 
 export default function App() {
   return (
-    <New/>
+    <ChallengeScreen/>
   );
 }
