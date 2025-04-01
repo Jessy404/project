@@ -17,6 +17,10 @@ const GetStarted = () => {
           Stay organized with your medication schedule. Never miss a dose, stay healthy.
         </Text>
 
+
+
+        
+
         <TouchableOpacity style={styles.button} onPress={() => router.push("/Account/signin")}>
           <Text style={styles.buttonText}>Get started →</Text>
         </TouchableOpacity>
