@@ -31,46 +31,56 @@ const MyMedication = () => {
     );
   };
 
-  const renderItem = ({ item }: { item: { id: string; name: string; type: string; time: string; dose: string; expiry: string; taken: boolean; rating: number } }) => (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.medName}>{item.name} ({item.type})</Text>
-        <View style={styles.ratingContainer}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <TouchableOpacity key={star} onPress={() => handleRating(item.id, star)}>
-              <FontAwesome name={item.rating >= star ? "star" : "star-o"} size={20} color={item.rating >= star ? "#FFD700" : "#CCC"} />
-            </TouchableOpacity>
-          ))}
+  const handleViewDetails = (id: string) => {
+    router.push(`/screens/MedicationDetail?id=${id}`);
+  };
+
+  const renderItem = ({ item }: { item: { id: string; name: string; type: string; time: string; dose: string; expiry: string; taken: boolean; rating: number } }) => {
+    // Ensure item is defined before using it
+    if (!item) {
+      return null; // Return null if the item is undefined
+    }
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.medName}>{item.name} ({item.type})</Text>
+          <View style={styles.ratingContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity key={star} onPress={() => handleRating(item.id, star)}>
+                <FontAwesome name={item.rating >= star ? "star" : "star-o"} size={20} color={item.rating >= star ? "#FFD700" : "#CCC"} />
+              </TouchableOpacity>
+            ))}
+          </View>
+          {item.taken ? (
+            <FontAwesome5 name="check-double" size={20} color="green" style={styles.icon} />
+          ) : (
+            <FontAwesome5 name="pills" size={20} color="#2265A2" style={styles.icon} />
+          )}
         </View>
-        {item.taken ? (
-          <FontAwesome5 name="check-double" size={20} color="green" style={styles.icon} />
-        ) : (
-          <FontAwesome5 name="pills" size={20} color="#2265A2" style={styles.icon} />
-        )}
-      </View>
-      <Text style={styles.details}>Time : <FontAwesome5 name="clock" /> {item.time}</Text>
-      <Text style={styles.details}>Dose : <FontAwesome5 name="capsules" /> {item.dose}</Text>
-      <Text style={styles.details}>End Date : {item.expiry}</Text>
-      <Text style={styles.details}>Rating : {item.rating} / 5</Text>
-      
-      <View style={styles.buttons}>
-        {!item.taken && (
-          <TouchableOpacity style={[styles.button, styles.taken]} onPress={() => handleTaken(item.id)}>
-            <Text style={styles.btnText}>Taken</Text>
+        <Text style={styles.details}>Time : <FontAwesome5 name="clock" /> {item.time}</Text>
+        <Text style={styles.details}>Dose : <FontAwesome5 name="capsules" /> {item.dose}</Text>
+        
+        <View style={styles.buttons}>
+          {!item.taken && (
+            <TouchableOpacity style={[styles.button, styles.taken]} onPress={() => handleTaken(item.id)}>
+              <Text style={styles.btnText}>Taken</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={[styles.button, styles.edit]} onPress={() => handleViewDetails(item.id)}>
+            <Text style={styles.btnText}>View</Text>
           </TouchableOpacity>
-        )}
-        <TouchableOpacity style={[styles.button, styles.edit]}>
-          <Text style={styles.btnText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.delete]} onPress={() => handleDelete(item.id)}>
-          <Text style={styles.btnText}>Delete</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={[styles.button, styles.delete]} onPress={() => handleDelete(item.id)}>
+            <Text style={styles.btnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
+       <View style={styles.topHalfCircle}></View>
       <Text style={styles.title}>My Medication</Text>
       <FlatList 
         data={medications} 
@@ -97,9 +107,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#062654",
+    color: "#FFF",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: 20,
   },
   card: {
     backgroundColor: "#EAF0F7",
@@ -130,6 +141,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
     marginBottom: 5,
+  },
+  
+  topHalfCircle: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "40%",
+    backgroundColor: "#2265A2", // اللون الكحلي
+    borderBottomLeftRadius: 100,
+    borderBottomRightRadius: 100,
   },
   buttons: {
     flexDirection: "row",
@@ -166,10 +188,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#062654",
+    backgroundColor: "#2265A2",
     paddingVertical: 12,
     borderRadius: 20,
-    marginBottom : 60,
+    marginBottom: 60,
   },
   addButtonText: {
     color: "#FFF",
