@@ -57,7 +57,7 @@ interface MedicineItemProps {
 
 const MedicineItem: React.FC<MedicineItemProps> = ({ name, time, dose, schedule, icon, status }) => (
   <View style={styles.item}>
-    <MaterialCommunityIcons name={icon} size={30} color="#007BFF" style={styles.icon} />
+    <MaterialCommunityIcons name={icon as keyof typeof MaterialCommunityIcons.glyphMap} size={30} color="#007BFF" style={styles.icon} />
     <View style={styles.details}>
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.schedule}>{schedule}</Text>
