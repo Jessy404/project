@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
 const MedicationDetail = () => {
   const router = useRouter();
-  const { id } = useLocalSearchParams(); // الحصول على id من الـ query params
+  const { id } = useLocalSearchParams(); 
   const [medication, setMedication] = useState<{
     id: string;
     name: string;
@@ -18,7 +18,18 @@ const MedicationDetail = () => {
     endDate: string;
   } | null>(null);
 
-  // بيانات محاكاة للميديكشن
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedMedication, setEditedMedication] = useState({
+    name: '',
+    type: '',
+    dose: '',
+    startDate: '',
+    endDate: '',
+    expiry: '',
+    rating: 0,
+  });
+
+
   const medications = [
     { id: "1", name: "Paracetamol", type: "Tablet", time: "08:00 AM", dose: "500mg", expiry: "12/2025", rating: 4, startDate: "01/01/2023", endDate: "12/2023" },
     { id: "2", name: "Vitamin C", type: "Syrup", time: "12:00 PM", dose: "1000mg", expiry: "06/2024", rating: 5, startDate: "01/01/2023", endDate: "06/2024" },
@@ -27,9 +38,20 @@ const MedicationDetail = () => {
 
   useEffect(() => {
     if (id) {
-      // محاكاة تحميل البيانات بناءً على الـ id
+  
       const medicationData = medications.find(med => med.id === id);
       setMedication(medicationData || null);
+      if (medicationData) {
+        setEditedMedication({
+          name: medicationData.name,
+          type: medicationData.type,
+          dose: medicationData.dose,
+          startDate: medicationData.startDate,
+          endDate: medicationData.endDate,
+          expiry: medicationData.expiry,
+          rating: medicationData.rating,
+        });
+      }
     }
   }, [id]);
 
@@ -38,49 +60,102 @@ const MedicationDetail = () => {
   if (!medication) return <Text>Loading medication details...</Text>;
 
   const handleEdit = () => {
-    // router.push(`/screens/EditMedication?id=${id}`); // إنتقال إلى صفحة التعديل
+    setIsEditing(!isEditing); 
+  };
+
+  const handleSave = () => {
+
+    setMedication({ ...medication, ...editedMedication });
+    setIsEditing(false);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.topHalfCircle}></View> {/* نصف الدائرة الكحلي */}
       <View style={styles.card}>
-        <Text style={styles.title}>{medication.name}</Text>
+        <Text style={styles.title}>{isEditing ? "Edit Medication" : medication.name}</Text>
+        
         <View style={styles.detailsRow}>
-          <Text style={styles.detailsTitle}>Type : </Text>
-          <Text style={styles.details}>{medication.type}</Text>
+          <Text style={styles.detailsTitle}>Type: </Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.input}
+              value={editedMedication.type}
+              onChangeText={(text) => setEditedMedication({ ...editedMedication, type: text })}
+            />
+          ) : (
+            <Text style={styles.details}>{medication.type}</Text>
+          )}
         </View>
+        
         <View style={styles.detailsRow}>
-          <Text style={styles.detailsTitle}>Dose : </Text>
-          <Text style={styles.details}>{medication.dose}</Text>
+          <Text style={styles.detailsTitle}>Dose: </Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.input}
+              value={editedMedication.dose}
+              onChangeText={(text) => setEditedMedication({ ...editedMedication, dose: text })}
+            />
+          ) : (
+            <Text style={styles.details}>{medication.dose}</Text>
+          )}
         </View>
+        
         <View style={styles.detailsRow}>
-          <Text style={styles.detailsTitle}>Start Date : </Text>
-          <Text style={styles.details}>{medication.startDate}</Text>
+          <Text style={styles.detailsTitle}>Start Date: </Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.input}
+              value={editedMedication.startDate}
+              onChangeText={(text) => setEditedMedication({ ...editedMedication, startDate: text })}
+            />
+          ) : (
+            <Text style={styles.details}>{medication.startDate}</Text>
+          )}
         </View>
+        
         <View style={styles.detailsRow}>
-          <Text style={styles.detailsTitle}>End Date : </Text>
-          <Text style={styles.details}>{medication.endDate}</Text>
+          <Text style={styles.detailsTitle}>End Date: </Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.input}
+              value={editedMedication.endDate}
+              onChangeText={(text) => setEditedMedication({ ...editedMedication, endDate: text })}
+            />
+          ) : (
+            <Text style={styles.details}>{medication.endDate}</Text>
+          )}
         </View>
+        
         <View style={styles.detailsRow}>
-          <Text style={styles.detailsTitle}>Expiry : </Text>
-          <Text style={styles.details}>{medication.expiry}</Text>
+          <Text style={styles.detailsTitle}>Expiry: </Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.input}
+              value={editedMedication.expiry}
+              onChangeText={(text) => setEditedMedication({ ...editedMedication, expiry: text })}
+            />
+          ) : (
+            <Text style={styles.details}>{medication.expiry}</Text>
+          )}
         </View>
         
         <View style={styles.ratingContainer}>
-          <Text style={styles.detailsTitle}>Rating : </Text>
+          <Text style={styles.detailsTitle}>Rating: </Text>
           {[1, 2, 3, 4, 5].map((star) => (
             <FontAwesome
               key={star}
-              name={medication.rating >= star ? "star" : "star-o"}
+              name={editedMedication.rating >= star ? "star" : "star-o"}
               size={20}
-              color={medication.rating >= star ? "#FFD700" : "#DDD"}
+              color={editedMedication.rating >= star ? "#FFD700" : "#DDD"}
+              onPress={() => isEditing && setEditedMedication({ ...editedMedication, rating: star })}
             />
           ))}
         </View>
       </View>
-      <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-        <Text style={styles.editButtonText}>Edit Medication</Text>
+
+      <TouchableOpacity style={styles.editButton} onPress={isEditing ? handleSave : handleEdit}>
+        <Text style={styles.editButtonText}>{isEditing ? "Save Changes" : "Edit Medication"}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -92,8 +167,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     padding: 20,
     paddingTop: 40,
-    justifyContent: 'center',  // توسيط العنصر رأسياً
-    alignItems: 'center',  // توسيط العنصر أفقيًا
+    justifyContent: 'center',  
+    alignItems: 'center', 
   },
   topHalfCircle: {
     position: "absolute",
@@ -101,7 +176,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: "40%",
-    backgroundColor: "#003366", // اللون الكحلي
+    backgroundColor: "#2265A2", // اللون الكحلي
     borderBottomLeftRadius: 100,
     borderBottomRightRadius: 100,
   },
@@ -122,23 +197,33 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 2 },
     elevation: 5,
-    width: '90%', // جعله يملأ عرض الشاشة مع بعض التباعد
-    maxWidth: 400, // تحديد الحد الأقصى لعرض الكارد
+    width: '90%', 
+    maxWidth: 400, 
   },
   detailsRow: {
     flexDirection: "row",
-    // justifyContent: "space-between",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
   details: {
-    fontSize: 18,
+    fontSize: 16,
     color: "#555",
     lineHeight: 22,
   },
   detailsTitle: {
     fontSize: 18,
     color: "#2265A2",
-    fontWeight: "bold",
+    fontWeight: "600",
+  },
+  input: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingLeft: 10,
+    fontSize: 16,
+    color: "#333",
+    width: '60%',
   },
   ratingContainer: {
     flexDirection: "row",

@@ -80,6 +80,7 @@ const MyMedication = () => {
 
   return (
     <View style={styles.container}>
+       <View style={styles.topHalfCircle}></View>
       <Text style={styles.title}>My Medication</Text>
       <FlatList 
         data={medications} 
@@ -106,9 +107,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#062654",
+    color: "#FFF",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: 20,
   },
   card: {
     backgroundColor: "#EAF0F7",
@@ -139,6 +141,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
     marginBottom: 5,
+  },
+  
+  topHalfCircle: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "40%",
+    backgroundColor: "#2265A2", // اللون الكحلي
+    borderBottomLeftRadius: 100,
+    borderBottomRightRadius: 100,
   },
   buttons: {
     flexDirection: "row",
@@ -175,7 +188,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#062654",
+    backgroundColor: "#2265A2",
     paddingVertical: 12,
     borderRadius: 20,
     marginBottom: 60,
