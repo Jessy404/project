@@ -73,6 +73,7 @@ const ChallengeScreen: React.FC = () => {
       <FlatList
         data={challengeList}
         keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 5 }}
         ListHeaderComponent={<Text style={styles.header}>My Challenge</Text>}
         renderItem={({ item }) => (
@@ -116,11 +117,11 @@ const styles = StyleSheet.create({
   challengeItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#EAF0F7",
     padding: 10,
     margin: 5,
     marginVertical: 8,
-    borderRadius: 35,
+    borderRadius: 25,
     elevation: 3,
   },
   imageContainer: {
