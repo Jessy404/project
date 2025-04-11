@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground } from "react-native";
-// import { router } from "expo-router";
 import { useRouter } from "expo-router";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {auth, db} from "../../config/firebaseConfig"
 import {createUserWithEmailAndPassword} from "firebase/auth";
@@ -29,6 +29,7 @@ export default function RegisterScreen() {
       .catch((e) => {
         console.log("Error:" , e.message);
       });
+
   };
   
   // const saveUser = async (user: /*unresolved*/ any ) => {
@@ -68,16 +69,19 @@ export default function RegisterScreen() {
   };
   
   return (
-    <ImageBackground source={require("../../assets/images/login-background.jpeg")} style={styles.background}>
-      
+    <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
+       <KeyboardAvoidingView 
+              behavior={Platform.OS === "ios" ? "padding" : "height"} 
+              style={styles.container}
+            >
     
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-  <Text style={styles.backText}>{"<"} Back</Text>
+      <Ionicons name="arrow-back" size={24} color="white" />
 </TouchableOpacity>
 
 
 
-      <View style={styles.container}>
+     
         <Text style={styles.title}>Create an Account</Text>
 
         <TextInput style={styles.input} placeholder="Full Name" value={name} onChangeText={(value)=>setName(value)} />
@@ -100,7 +104,7 @@ export default function RegisterScreen() {
             Already have an account? <Text style={{ fontWeight: "bold", color: "#062654" }}>Sign in</Text>
           </Text>
         </TouchableOpacity>
-      </View>
+        </KeyboardAvoidingView>
     </ImageBackground>
   );
 }
@@ -108,18 +112,17 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    justifyContent: "flex-start",
+    justifyContent: "center",
     alignItems: "center",
     resizeMode: "cover",
-    paddingTop: 50,
+   
   },
   backButton: {
-    flexDirection: "row", 
-    alignItems: "center",
+    
     position: "absolute",
     top: 50,
     left: 20,
-    zIndex: 10,
+    
   },
   backText: {
     color: "white",
@@ -129,23 +132,23 @@ const styles = StyleSheet.create({
   },
   
   container: {
-    width: "100%",
-    height: "85%",
+    width: "90%",
     backgroundColor: "white",
     padding: 20,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
+    borderRadius: 40,
     alignItems: "center",
     elevation: 10,
-    position: "absolute",
-    bottom: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
     color: "#062654",
     marginBottom: 30,
-    marginTop: 20,
+   
   },
   input: {
     width: "100%",
@@ -155,16 +158,21 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     backgroundColor: "#f9f9f9",
     marginBottom: 10,
-    elevation: 3,
+    shadowColor: "#999",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   button: {
     backgroundColor: "#062654",
     padding: 15,
-    marginTop: 30,
     borderRadius: 25,
     width: "100%",
     alignItems: "center",
-    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
   buttonText: {
     color: "white",
