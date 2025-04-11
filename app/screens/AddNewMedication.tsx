@@ -22,7 +22,7 @@ const AddNewMedication = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [medications, setMedications] = useState<Medication[]>([]);
-  
+
   const medicationOptions = ["Tablet", "Capsules", "Drops", "Syrup", "Injection"];
   const router = useRouter();
 
@@ -140,7 +140,7 @@ const AddNewMedication = () => {
         value={endDate}
         onChangeText={setEndDate}
       />
-
+      
       <TouchableOpacity style={styles.addButton}>
         <Text style={styles.addButtonText}>+ Add Reminder</Text>
       </TouchableOpacity>
