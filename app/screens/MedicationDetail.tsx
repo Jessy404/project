@@ -126,11 +126,13 @@ const MedicationDetail = () => {
             {isEditing ? (
               <TextInput
                 style={styles.input}
-                value={editedMedication[field]}
-                onChangeText={(text) => setEditedMedication({ ...editedMedication, [field]: text })}
+                value={editedMedication[field as keyof typeof editedMedication].toString()}
+                onChangeText={(text) =>
+                  setEditedMedication({ ...editedMedication, [field as keyof typeof editedMedication]: text })
+                }
               />
             ) : (
-              <Text style={styles.details}>{medication[field]}</Text>
+              <Text style={styles.details}>{medication[field as keyof typeof medication]}</Text>
             )}
           </View>
         ))}
