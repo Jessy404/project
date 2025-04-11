@@ -99,6 +99,7 @@ export default function LoginScreen() {
     //             <ActivityIndicator size="large" color="#062654" />
     //         </View>
     //     );
+router.push("/(tabs)/home")    
     }
 
     return (
