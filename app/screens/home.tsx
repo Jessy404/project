@@ -1,222 +1,248 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, ScrollView, Image } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 
-const medicinesData: Record<number, { id: string; name: string; time: string; dose: string; schedule: string; icon: keyof typeof MaterialCommunityIcons.glyphMap; status: string; }[]> = {
+const userName = "John"; // اسم المستخدم
+const userImage = "https://randomuser.me/api/portraits/men/32.jpg"; // رابط صورة واضحة
+const currentMonth = new Date().toLocaleString("default", { month: "long" }); // الشهر الحالي
+const currentYear = new Date().getFullYear(); // السنة الحالية
+
+const medicinesData = {
   7: [
-    { id: "1", name: "Ibrupain", time: "7:00 PM", dose: "2 Tablets", schedule: "Before Sleeping", icon: "pill", status: "done" },
-  ],
-  8: [
-    { id: "2", name: "ABCD", time: "9:00 PM", dose: "3 Syrups", schedule: "After Dinner", icon: "bottle-tonic-plus", status: "missed" },
-  ],
-  9: [
-    { id: "3", name: "Crocine", time: "9:00 PM", dose: "3 Capsules", schedule: "After Dinner", icon: "pill-multiple", status: "done" },
-  ],
-  10: [
-    { id: "4", name: "CA738", time: "10:00 PM", dose: "1 Injection", schedule: "Before Sleeping", icon: "needle", status: "done" },
+    { id: "1", name: "Ibuprofen", time: "7:00 PM", dose: "2 Tablets", schedule: "Before Sleeping", icon: "pill", status: "done" },
+    { id: "2", name: "Paracetamol", time: "8:00 PM", dose: "1 Tablet", schedule: "After Dinner", icon: "pill", status: "done" },
+    { id: "3", name: "Vitamin C", time: "9:00 PM", dose: "1 Capsule", schedule: "Before Bed", icon: "pill", status: "missed" },
+    { id: "4", name: "Aspirin", time: "6:00 AM", dose: "1 Tablet", schedule: "Morning Dose", icon: "pill", status: "done" },
+    { id: "5", name: "Cough Syrup", time: "10:00 AM", dose: "2 ml", schedule: "After Breakfast", icon: "bottle-tonic-plus", status: "missed" },
+    { id: "6", name: "Antibiotics", time: "2:00 PM", dose: "1 Tablet", schedule: "Afternoon Dose", icon: "pill", status: "done" },
+    { id: "7", name: "Pain Reliever", time: "4:00 PM", dose: "1 Capsule", schedule: "Evening Dose", icon: "pill", status: "done" },
+    { id: "8", name: "Eye Drops", time: "8:00 PM", dose: "2 Drops", schedule: "Before Bed", icon: "eye", status: "missed" },
+    { id: "9", name: "Vitamin D", time: "12:00 PM", dose: "1 Tablet", schedule: "After Lunch", icon: "pill", status: "done" },
   ],
 };
 
-const Calendar = ({ onSelectDate, selected }: { onSelectDate: (date: number) => void; selected: number }) => {
-  const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-  const dates = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+const challenges = [
+  { id: "1", title: "Drink More Water", icon: "cup-water" },
+  { id: "2", title: "Exercise Daily", icon: "run" },
+  { id: "3", title: "Healthy Diet", icon: "food-apple" },
+  { id: "4", title: "Sleep 7 Hours", icon: "bed" },
+  { id: "5", title: "Avoid Sugar", icon: "food-off" },
+  { id: "6", title: "Read Books", icon: "book-open-page-variant" },
+  { id: "7", title: "Meditation", icon: "yoga" },
+  { id: "8", title: "Walk 5 KM", icon: "walk" },
+  { id: "9", title: "Stretching", icon: "human-handsdown" },
+  { id: "10", title: "Play a Sport", icon: "soccer" },
+  { id: "11", title: "Learn Cooking", icon: "chef-hat" },
+  { id: "12", title: "Practice Yoga", icon: "human-yoga" },
+  { id: "13", title: "Reduce Screen Time", icon: "laptop-off" },
+  { id: "14", title: "Volunteer", icon: "hand-heart" },
+  { id: "15", title: "Spend Time in Nature", icon: "pine-tree" },
+  { id: "16", title: "Write a Journal", icon: "notebook-outline" },
+  { id: "17", title: "Learn a New Skill", icon: "school" },
+  { id: "18", title: "Create Art", icon: "palette" },
+  { id: "19", title: "Listen to Music", icon: "music-circle" },
+  { id: "20", title: "Dance", icon: "dance-ballroom" },
+];
+
+
+const Calendar = ({ onSelectDate, selected }) => {
+  const days = Array.from({ length: 31 }, (_, i) => ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][i % 7]); // توزيع الأيام
+  const dates = Array.from({ length: 31 }, (_, i) => i + 1); // إنشاء 31 يومًا
 
   return (
-    <View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.calendarScrollView}>
-        <View style={styles.calendarContainer}>
-          {days.map((day, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[styles.dayContainer, selected === dates[index] && styles.selectedDay]}
-              onPress={() => onSelectDate(dates[index])}
-            >
-              <Text style={styles.dayText}>{day}</Text>
-              <View style={[styles.dateCircle, selected === dates[index] && styles.selectedDate]}>
-                <Text style={styles.dateText}>{dates[index]}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
-    </View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.calendarScrollView}>
+      <View style={styles.calendarContainer}>
+        {dates.map((date, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[styles.dayContainer, selected === date && styles.selectedDay]}
+            onPress={() => onSelectDate(date)}
+          >
+            <Text style={styles.dayText}>{days[index % 7]}</Text>
+            <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
+              <Text style={styles.dateText}>{date}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </ScrollView>
   );
 };
 
-import type { IconProps } from "@expo/vector-icons/build/createIconSet";
 
-interface MedicineItemProps {
-  name: string;
-  time: string;
-  dose: string;
-  schedule: string;
-  icon: IconProps<typeof MaterialCommunityIcons["name"]>["name"];
-  status: string;
-}
 
-const MedicineItem: React.FC<MedicineItemProps> = ({ name, time, dose, schedule, icon, status }) => (
-  <View style={styles.item}>
-    <MaterialCommunityIcons name={icon as keyof typeof MaterialCommunityIcons.glyphMap} size={30} color="#007BFF" style={styles.icon} />
+
+const MedicineItem = ({ name, time, dose, schedule, icon, status }) => (
+  <View style={styles.medicineItemContainer}>
+    <MaterialCommunityIcons name={icon} size={40} color="#3B8C94" style={styles.icon} />
     <View style={styles.details}>
-      <Text style={styles.name}>{name}</Text>
-      <Text style={styles.schedule}>{schedule}</Text>
-      <Text style={styles.dose}>{dose}</Text>
+      <Text style={styles.medicineName}>{name}</Text>
+      <Text style={styles.scheduleText}>{schedule}</Text>
+      <Text style={styles.doseText}>{dose}</Text>
     </View>
-    <View style={styles.rightSection}>
-      <View style={styles.timeContainer}>
-        <Ionicons name="time-outline" size={18} color="#666" />
-        <Text style={styles.time}>{time}</Text>
-      </View>
-      <TouchableOpacity>
-        <Ionicons
-          name={status === "done" ? "checkmark-done-circle-outline" : "alert-circle-outline"}
-          size={28}
-          color={status === "done" ? "green" : "red"}
-        />
-      </TouchableOpacity>
+    <View style={styles.statusContainer}>
+      <Text style={styles.timeText}>{time}</Text>
+      <Ionicons
+        name={status === "done" ? "checkmark-done-circle-outline" : "alert-circle-outline"}
+        size={30}
+        color={status === "done" ? "#4CAF50" : "#FF5733"}
+      />
     </View>
   </View>
 );
 
-const MedicineList = () => {
+const ChallengeItem = ({ title, icon }) => (
+  <View style={styles.itemContainer}>
+    <MaterialCommunityIcons name={icon} size={30} color="#3B8C94" />
+    <Text style={styles.itemText}>{title}</Text>
+  </View>
+);
+
+const HomeScreen = () => {
   const [selectedDate, setSelectedDate] = useState(7);
   const medicines = medicinesData[selectedDate] || [];
-  const router = useRouter();
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
+      {/* الهيدر */}
+      <View style={styles.headerContainer}>
+        <Image source={{ uri: userImage }} style={styles.userImage} />
+        <View style={styles.textContainer}>
+          <Text style={styles.headerText}>Hello, {userName}</Text>
+          <Text style={styles.headerSubText}>Stay on track with your health goals!</Text>
+        </View>
+      </View>
+
+      {/* الكاليندر */}
+      <View style={styles.calendarHeader}>
+        <Text style={styles.sectionTitle}>Calendar</Text>
+        <Text style={styles.dateText}>{`${currentMonth} ${currentYear}`}</Text>
+      </View>
       <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
-      <FlatList
-      ListHeaderComponent={
-        <View style={styles.calendarContainer}>
-          {Object.keys(medicinesData).map((date) => (
-            <TouchableOpacity key={date} style={[styles.dayContainer, selectedDate === Number(date) && styles.selectedDay]} onPress={() => setSelectedDate(Number(date))}>
-              <Text style={styles.dateText}>{date}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      }
-      data={medicines}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <View style={styles.item}>
-          <MaterialCommunityIcons name={item.icon as keyof typeof MaterialCommunityIcons.glyphMap} size={30} color="#007BFF" style={styles.icon} />
-          <View style={styles.details}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.schedule}>{item.schedule}</Text>
-            <Text style={styles.dose}>{item.dose}</Text>
-          </View>
-          <View style={styles.rightSection}>
-            <Text style={styles.time}>{item.time}</Text>
-            <Ionicons name={item.status === "done" ? "checkmark-done-circle-outline" : "alert-circle-outline"} size={28} color={item.status === "done" ? "green" : "red"} />
-          </View>
-        </View>
-      )}
-      ListFooterComponent={
-        <TouchableOpacity style={styles.addButton} onPress={() => router.push("/screens/AddNewMedication")}> 
-          <Ionicons name="add-circle" size={50} color="#007BFF" />
-        </TouchableOpacity>
-      }
-    />
-     
-    </View>
+
+      {/* قسم الأدوية */}
+      <View>
+        <Text style={styles.sectionTitle}>My Medication</Text>
+        <FlatList
+          data={medicines}
+          horizontal={true}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <MedicineItem {...item} />}
+          showsHorizontalScrollIndicator={true}
+          contentContainerStyle={{ paddingHorizontal: 10 }}
+        />
+      </View>
+
+      {/* قسم التحديات */}
+      <View>
+        <Text style={styles.sectionTitle}>My Challenges</Text>
+        <FlatList
+          data={challenges}
+          horizontal={true}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <ChallengeItem {...item} />}
+          showsHorizontalScrollIndicator={true}
+          contentContainerStyle={{ paddingHorizontal: 10 }}
+        />
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
-    padding: 10,
+    backgroundColor: "#E3F2FD",
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+   // backgroundColor: "#1976D2",
+    padding: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  userImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 15,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "black",
+  },
+  headerSubText: {
+    fontSize: 16,
+    color: "black",
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    marginVertical: 10,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1565C0",
+  },
+  dateText: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#0D47A1",
   },
   calendarScrollView: {
-    marginBottom: 10,
+    marginVertical: 10,
   },
   calendarContainer: {
     flexDirection: "row",
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 10,
   },
   dayContainer: {
     alignItems: "center",
-    padding: 8,
-    borderRadius: 10,
-    marginHorizontal: 4,
+    marginHorizontal: 5,
   },
   selectedDay: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#1976D2",
+    borderRadius: 20,
+    padding: 5,
   },
   dayText: {
-    color: "gray",
-    fontSize: 10,
+    fontSize: 20,
+    color: "#0D47A1",
   },
   dateCircle: {
-    width: 35,
-    height: 35,
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    backgroundColor: "#d3d3d3",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 5,
+    padding: 10,
   },
-  selectedDate: {
-    backgroundColor: "black",
-  },
-  dateText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  item: {
+  medicineItemContainer: {
     flexDirection: "row",
-    backgroundColor: "#fff",
-    padding: 12,
-    marginVertical: 6,
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 8,
+    marginHorizontal: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  itemContainer: {
+    backgroundColor: "#BBDEFB",
+    padding: 15,
+    marginHorizontal: 10,
     borderRadius: 10,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  icon: {
-    marginRight: 10,
-  },
-  details: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  schedule: {
-    fontSize: 12,
-    color: "#666",
-  },
-  dose: {
-    fontSize: 12,
-    color: "#007BFF",
-  },
-  rightSection: {
-    alignItems: "center",
-  },
-  timeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
-  },
-  time: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginLeft: 5,
-  },
-  addButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
   },
 });
 
-export default MedicineList;
+export default HomeScreen;
+
