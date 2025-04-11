@@ -1,23 +1,28 @@
-import React from 'react';
-import { View, Text, Image, ImageBackground, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import React from "react";
+import { View, Text, Image, ImageBackground, StyleSheet, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 
 const GetStarted = () => {
   const router = useRouter();
 
   return (
-    <ImageBackground 
-      source={require('../../assets/images/gradiant.jpeg')} 
-      style={styles.background}
-    >
+    <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
       <View style={styles.overlay} />
       <View style={styles.content}>
-      <Image source={require('../../assets/images/Logo.png')} style={{width: 100, height: 100}} />
-        <Text style={styles.title}>Welcome to MedReminder</Text>
-        <Text style={styles.subtitle}>Stay on track with your medications and never miss a dose again.</Text>
+
+        <Text style={styles.title}>
+          What’s the <Text style={styles.highlight}>time?</Text>
+        </Text>
+        <Text style={styles.subtitle}>
+          Stay organized with your medication schedule. Never miss a dose, stay healthy.
+        </Text>
+
+
+
         
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/Account/signin')}>
-          <Text style={styles.buttonText}>Get Started</Text>
+
+        <TouchableOpacity style={styles.button} onPress={() => router.push("/Account/signin")}>
+          <Text style={styles.buttonText}>Get started →</Text>
         </TouchableOpacity>
       </View>
     </ImageBackground>
@@ -27,45 +32,54 @@ const GetStarted = () => {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    resizeMode: "cover",
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
   content: {
-    alignItems: 'center',
     paddingHorizontal: 30,
+    alignItems: "center",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
+  brand: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
+    textTransform: "uppercase",
+    letterSpacing: 2,
     marginBottom: 10,
   },
+  title: {
+    fontSize: 42,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  highlight: {
+    color: "#2ACAE1",
+  },
   subtitle: {
-    fontSize: 16,
-    color: '#E5FCFF',
-    textAlign: 'center',
-    marginBottom: 40,
+    fontSize: 18,
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 30,
   },
   button: {
-    backgroundColor: '#3498db',
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     paddingVertical: 12,
     paddingHorizontal: 40,
-    borderRadius: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#fff",
   },
   buttonText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
 });
 

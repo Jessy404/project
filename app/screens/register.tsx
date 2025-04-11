@@ -1,160 +1,145 @@
-import { StyleSheet, TextInput, Pressable, Dimensions , View , Text} from 'react-native';
-import { useState } from 'react';
-import {  router } from 'expo-router';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 
+export default function RegisterScreen() {
+ 
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
 
-const { width, height } = Dimensions.get('window');
-const guidelineBaseWidth = 350;
-const guidelineBaseHeight = 680;
-
-
-export default function Register() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
-
-  const [phone, setPhone] = useState("")
-  
-  const handelSignUp = () => {
-  
-    router.replace('../(tabs)/home');
-  }
+  const handleRegister = () => {
+    router.push("/(tabs)/home");
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
-      <View style={styles.separator} />
-      <View style={styles.inputView}>
-        {/* <TextInput style={styles.input}
-          placeholder="First name"
-          placeholderTextColor="#9D23CF"
-        /> */}
+    <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
+       <KeyboardAvoidingView 
+              behavior={Platform.OS === "ios" ? "padding" : "height"} 
+              style={styles.container}
+            >
+    
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <Ionicons name="arrow-back" size={24} color="white" />
+</TouchableOpacity>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          placeholderTextColor="#3A3535"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#3A3535"
-          value={email}
-          onChangeText={setEmail}
 
-        />
-         <TextInput
-          style={styles.input}
-          placeholder="Phone"
-          placeholderTextColor="#3A3535"
-          value={phone}
-          onChangeText={setPhone}
 
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#3A3535"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <View style={styles.buttonView}>
-          <Pressable style={styles.button} onPress={handelSignUp}>
-            <Text style={styles.buttonText}>Register</Text>
-          </Pressable>
-          <View style={styles.sideBySide}>
-            <Text style = {{
-              fontWeight : "bold" ,
-              color:'#3A3535',
-              fontSize: (9),
+     
+        <Text style={styles.title}>Create an Account</Text>
 
-              }}>
-              Already have an Email ?
-            </Text>
-            {/* <Text style={styles.text}>
-             "Register Now"
-            </Text> */}
-{/* 
+        <TextInput style={styles.input} placeholder="Full Name" value={name} onChangeText={setName} />
+        <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" value={email} onChangeText={setEmail} />
+        <TextInput style={styles.input} placeholder="Phone Number" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+        <TextInput style={styles.input} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
 
-            <Link href="Account/login" style={styles.text2}> "Sign In Now" </Link> */}
-          </View>
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>Sign Up</Text>
+        </TouchableOpacity>
 
+        <Text style={styles.orText}>Or Sign up with</Text>
+        <View style={styles.socialIcons}>
+          <Ionicons name="logo-facebook" size={28} color="#3b5998" />
+          <Ionicons name="logo-google" size={28} color="#db4437" />
         </View>
-        {/* </View> */}
-      </View>
-    </View>
+
+        <TouchableOpacity onPress={() => router.push("/Account/signin")}>
+          <Text style={styles.signinText}>
+            Already have an account? <Text style={{ fontWeight: "bold", color: "#062654" }}>Sign in</Text>
+          </Text>
+        </TouchableOpacity>
+        </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor:'#Ffff',
+    justifyContent: "center",
+    alignItems: "center",
+    resizeMode: "cover",
+   
   },
-  text2: {
+  backButton: {
+    
+    position: "absolute",
+    top: 50,
+    left: 20,
+    
+  },
+  backText: {
+    color: "white",
+    fontSize: 22, 
     fontWeight: "bold",
-    color:"#3A3535"
+    marginLeft: 5, 
   },
-  sideBySide: {
-    backgroundColor:'#F4F4F4',
-    flexDirection: "row",
+  
+  container: {
+    width: "90%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 40,
+    alignItems: "center",
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   title: {
-    fontSize: 25,
-
-    fontWeight: 'bold',
-    color: "#3A3535"
-  },
-  sep: {
-    height: "10%",
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-  inputView: {
-    gap: 15,
-    width: "100%",
-    paddingHorizontal: 40,
-    marginBottom: 5,
-    backgroundColor:'#F4F4F4',
-
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#062654",
+    marginBottom: 30,
+   
   },
   input: {
-    height: 50,
-    paddingHorizontal: 20,
-    borderColor: "#3A3535",
-    borderWidth: 0.5,
-    borderRadius: 20
+    width: "100%",
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 25,
+    backgroundColor: "#f9f9f9",
+    marginBottom: 10,
+    shadowColor: "#999",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   button: {
-    marginTop: 40,
-    marginBottom: 10,
     backgroundColor: "#062654",
-    height: 45,
-    // borderColor: "gray",
-    // borderWidth: 1,
-    borderRadius: 20,
+    padding: 15,
+    borderRadius: 25,
+    width: "100%",
     alignItems: "center",
-    justifyContent: "center",
-    // borderRadius: 150,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
   buttonText: {
     color: "white",
     fontSize: 18,
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
-  buttonView: {
-    width: "100%",
-    paddingHorizontal: 50,
-    backgroundColor:'#F4F4F4',
-
+  orText: {
+    marginVertical: 15,
+    color: "#777",
+  },
+  socialIcons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "80%",
+    marginBottom: 15,
+    marginTop: 10,
+  },
+  signinText: {
+    color: "#777",
+    marginTop: 15,
   },
 });
+
