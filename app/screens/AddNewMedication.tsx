@@ -175,14 +175,14 @@ const AddNewMedication = () => {
       </Modal>
 
       <Toast config={{
-        success: ({ text1 }) => (
+        success: ({ text1 }: { text1?: string }) => (
           <View style={[styles.toastSuccess]}>
-            <Text style={styles.toastText}>{text1}</Text>
+            <Text style={styles.toastText}>{text1 || "Success!"}</Text>
           </View>
         ),
-        error: ({ text1 }) => (
+        error: ({ text1 }: { text1?: string }) => (
           <View style={[styles.toastError]}>
-            <Text style={styles.toastText}>{text1}</Text>
+            <Text style={styles.toastText}>{text1 || "An error occurred!"}</Text>
           </View>
         ),
       }} />
