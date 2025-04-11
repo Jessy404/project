@@ -45,62 +45,60 @@ export default function LoginScreen() {
     }, []);
 
     const onSignInClick = async () => {
-        setLoading(true);
+    //     setLoading(true);
 
-        try {
-            // Set persistence based on Remember Me selection
-            await setPersistence(
-                auth,
-                rememberMe ? browserLocalPersistence : browserSessionPersistence
-            );
+    //     try {
+    //         await setPersistence(
+    //             auth,
+    //             rememberMe ? browserLocalPersistence : browserSessionPersistence
+    //         );
 
-            // Save credentials if Remember Me is checked
-            if (rememberMe) {
-                await AsyncStorage.setItem('rememberedEmail', email);
-                await AsyncStorage.setItem('rememberedPassword', password);
-                await AsyncStorage.setItem('rememberMe', 'true');
-            } else {
-                // Clear saved credentials if Remember Me is unchecked
-                await AsyncStorage.removeItem('rememberedEmail');
-                await AsyncStorage.removeItem('rememberedPassword');
-                await AsyncStorage.removeItem('rememberMe');
-            }
+    //         if (rememberMe) {
+    //             await AsyncStorage.setItem('rememberedEmail', email);
+    //             await AsyncStorage.setItem('rememberedPassword', password);
+    //             await AsyncStorage.setItem('rememberMe', 'true');
+    //         } else {
+              
+    //             await AsyncStorage.removeItem('rememberedEmail');
+    //             await AsyncStorage.removeItem('rememberedPassword');
+    //             await AsyncStorage.removeItem('rememberMe');
+    //         }
 
-            // Sign in with Firebase
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            console.log(user);
+    //         // Sign in with Firebase
+    //         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    //         const user = userCredential.user;
+    //         console.log(user);
 
-            await getUserDetail();
-            router.replace('/(tabs)/home');
-        } catch (error) {
-            console.log(error);
-            if (Platform.OS === 'android') {
-                ToastAndroid.show('Incorrect Email or Password', ToastAndroid.BOTTOM);
-            } else {
-                Alert.alert('Error', 'Incorrect Email or Password');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+    //         await getUserDetail();
+    //         router.replace('/(tabs)/home');
+    //     } catch (error) {
+    //         console.log(error);
+    //         if (Platform.OS === 'android') {
+    //             ToastAndroid.show('Incorrect Email or Password', ToastAndroid.BOTTOM);
+    //         } else {
+    //             Alert.alert('Error', 'Incorrect Email or Password');
+    //         }
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
-    const getUserDetail = async () => {
-        const result = await getDoc(doc(db, "users", email));
-        if (result.exists()) {
-            console.log(result.data());
-            setUserDetail(result.data());
-        } else {
-            console.log("No such document!");
-        }
-    };
+    // const getUserDetail = async () => {
+    //     const result = await getDoc(doc(db, "users", email));
+    //     if (result.exists()) {
+    //         console.log(result.data());
+    //         setUserDetail(result.data());
+    //     } else {
+    //         console.log("No such document!");
+    //     }
+    // };
 
-    if (initializing) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#062654" />
-            </View>
-        );
+    // if (initializing) {
+    //     return (
+    //         <View style={styles.loadingContainer}>
+    //             <ActivityIndicator size="large" color="#062654" />
+    //         </View>
+    //     );
     }
 
     return (
