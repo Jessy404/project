@@ -8,6 +8,8 @@ import {createUserWithEmailAndPassword} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import {userDetailContext} from "./../../context/userDetailContext"
 import { useContext } from 'react';
+import { Alert } from "react-native";
+
 export default function RegisterScreen() {
    const router = useRouter();
   const [name, setName] = useState("");
@@ -23,14 +25,16 @@ export default function RegisterScreen() {
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (resp) => {
         const user = resp.user;
-        console.log("User created:",user);
-        await saveUser(user ,name); 
+        console.log("User created:", user);
+        await saveUser(user, name);  
+        Alert.alert("Success", "New account was created successfully");
       })
       .catch((e) => {
-        console.log("Error:" , e.message);
+        console.log("Error:", e.message);
+        Alert.alert("Error", e.message);
       });
-
   };
+  
   
   // const saveUser = async (user: /*unresolved*/ any ) => {
   //   await setDoc(doc(db, "users", user.uid), {
