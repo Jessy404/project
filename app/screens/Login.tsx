@@ -46,29 +46,23 @@ export default function LoginScreen() {
 
     const onSignInClick = async () => {
         setLoading(true);
-
+    
         try {
-            await setPersistence(
-                auth,
-                rememberMe ? browserLocalPersistence : browserSessionPersistence
-            );
-
             if (rememberMe) {
                 await AsyncStorage.setItem('rememberedEmail', email);
                 await AsyncStorage.setItem('rememberedPassword', password);
                 await AsyncStorage.setItem('rememberMe', 'true');
             } else {
-              
                 await AsyncStorage.removeItem('rememberedEmail');
                 await AsyncStorage.removeItem('rememberedPassword');
                 await AsyncStorage.removeItem('rememberMe');
             }
-
+    
             // Sign in with Firebase
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             console.log(user);
-
+    
             await getUserDetail();
             router.replace('/(tabs)/home');
         } catch (error) {
@@ -82,6 +76,7 @@ export default function LoginScreen() {
             setLoading(false);
         }
     };
+    
 
     const getUserDetail = async () => {
         const result = await getDoc(doc(db, "users", email));
