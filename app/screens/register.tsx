@@ -1,20 +1,78 @@
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-
-
+import {auth, db} from "../../config/firebaseConfig"
+import {createUserWithEmailAndPassword} from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import {userDetailContext} from "./../../context/userDetailContext"
+import { useContext } from 'react';
+import { Alert } from "react-native";
 export default function RegisterScreen() {
- 
+   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const {userDetail ,setUserDetail} =useContext(userDetailContext);
+  // const handleRegister = () => {
+  //   router.replace("/(tabs)/home");
+  // };
 
-  const handleRegister = () => {
-    router.push("/(tabs)/home");
+  const createNewAccount = () => {
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(async (resp) => {
+        const user = resp.user;
+
+        console.log("User created:", user);
+        await saveUser(user, name);  
+        Alert.alert("Success", "New account was created successfully");
+
+      })
+      .catch((e) => {
+        console.log("Error:", e.message);
+        Alert.alert("Error", e.message);
+      });
   };
+  
+  
+  // const saveUser = async (user: /*unresolved*/ any ) => {
+  //   await setDoc(doc(db, "users", user.uid), {
+  //     name: user.fullName,
+  //     email: user.email,
+  //     member: false,
+  //     uid: user.uid
+  //   });
+  // };
+  const saveUser = async (user: /*unresolved*/ any, fullName: string) => {
 
+    try {
+      console.log("Saving user to Firestore:", {
+        name: fullName,
+        email: user.email,
+        member: false,
+        uid: user.uid
+      });
+  
+      
+      await setDoc(doc(db, "users", user.uid), {
+        name: fullName,
+        email: user.email,
+        member: false,
+        uid: user.uid
+      });
+  
+      console.log("User saved successfully.");
+    } catch (e) {
+      console.log("Error saving user:");
+    }
+
+    // setUserDetail({
+
+    // })
+  };
+  
   return (
     <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
        <KeyboardAvoidingView 
@@ -31,12 +89,12 @@ export default function RegisterScreen() {
      
         <Text style={styles.title}>Create an Account</Text>
 
-        <TextInput style={styles.input} placeholder="Full Name" value={name} onChangeText={setName} />
-        <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" value={email} onChangeText={setEmail} />
-        <TextInput style={styles.input} placeholder="Phone Number" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
-        <TextInput style={styles.input} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+        <TextInput style={styles.input} placeholder="Full Name" value={name} onChangeText={(value)=>setName(value)} />
+        <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" value={email} onChangeText={(value)=>setEmail(value)} />
+        <TextInput style={styles.input} placeholder="Phone Number" keyboardType="phone-pad" value={phone} onChangeText={(value)=>setPhone(value)} />
+        <TextInput style={styles.input} placeholder="Password" secureTextEntry value={password} onChangeText={(value)=>setPassword(value)} />
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <TouchableOpacity style={styles.button} onPress={createNewAccount}>
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
 
