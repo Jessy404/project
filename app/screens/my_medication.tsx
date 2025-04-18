@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image } from "react-native";
 import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -12,15 +12,16 @@ type Medication = {
   expiry: string;
   taken: boolean;
   rating: number;
+  image?: string;
 };
 
 const MyMedication = () => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
   const [medications, setMedications] = useState<Medication[]>([
-    { id: "1", name: "Paracetamol", type: "Tablet", time: "08:00 AM", dose: "500mg", expiry: "12/2025", taken: false, rating: 0 },
-    { id: "2", name: "Vitamin C", type: "Syrup", time: "12:00 PM", dose: "1000mg", expiry: "06/2024", taken: false, rating: 0 },
-    { id: "3", name: "Ibuprofen", type: "Injection", time: "06:00 PM", dose: "400mg", expiry: "09/2026", taken: false, rating: 0 },
+    { id: "1", name: "Paracetamol", type: "Tablet", time: "08:00 AM", dose: "500mg", expiry: "12/2025", taken: false, rating: 0, image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884" },
+    { id: "2", name: "Vitamin C", type: "Syrup", time: "12:00 PM", dose: "1000mg", expiry: "06/2024", taken: false, rating: 0, image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884" },
+    { id: "3", name: "Ibuprofen", type: "Injection", time: "06:00 PM", dose: "400mg", expiry: "09/2026", taken: false, rating: 0, image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884" },
   ]);
 
   const handleTaken = (id: string) => {
@@ -58,28 +59,38 @@ const MyMedication = () => {
 
     return (
       <View style={styles.card}>
-        <View style={styles.header}>
-          <Text style={styles.medName}>{item.name} ({item.type})</Text>
-          <View style={styles.ratingContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => handleRating(item.id, star)}>
-                <FontAwesome
-                  name={item.rating >= star ? "star" : "star-o"}
-                  size={20}
-                  color={item.rating >= star ? "#FFD700" : "#CCC"}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-          {item.taken ? (
-            <FontAwesome5 name="check-double" size={20} color="green" style={styles.icon} />
-          ) : (
-            <FontAwesome5 name="pills" size={20} color="#2265A2" style={styles.icon} />
+        <View style={styles.cardContent}>
+          {item.image && (
+            <Image
+              source={{ uri: item.image }}
+              style={styles.image}
+              resizeMode="cover"
+            />
           )}
+          <View style={{ flex: 1 }}>
+            <View style={styles.header}>
+              <Text style={styles.medName}>{item.name} ({item.type})</Text>
+              {item.taken ? (
+                <FontAwesome5 name="check-double" size={20} color="green" style={styles.icon} />
+              ) : (
+                <FontAwesome5 name="pills" size={20} color="#2265A2" style={styles.icon} />
+              )}
+            </View>
+            <View style={styles.ratingContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => handleRating(item.id, star)}>
+                  <FontAwesome
+                    name={item.rating >= star ? "star" : "star-o"}
+                    size={18}
+                    color={item.rating >= star ? "#FFD700" : "#CCC"}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.details}>Time: <FontAwesome5 name="clock" /> {item.time}</Text>
+            <Text style={styles.details}>Dose: <FontAwesome5 name="capsules" /> {item.dose}</Text>
+          </View>
         </View>
-        <Text style={styles.details}>Time : <FontAwesome5 name="clock" /> {item.time}</Text>
-        <Text style={styles.details}>Dose : <FontAwesome5 name="capsules" /> {item.dose}</Text>
-
         <View style={styles.buttons}>
           {!item.taken && (
             <TouchableOpacity style={[styles.button, styles.taken]} onPress={() => handleTaken(item.id)}>
@@ -99,7 +110,7 @@ const MyMedication = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topHalfCircle}></View>
+      {/* <View style={styles.topHalfCircle}></View> */}
 
       <View style={styles.headerContainer}>
         <Text style={styles.title}>My Medication</Text>
@@ -158,7 +169,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#FFF",
+    color: "#2265A2",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -180,8 +191,8 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   card: {
-    backgroundColor: "#EAF0F7",
-    padding: 15,
+    backgroundColor: "#FFF",
+    padding: 10,
     borderRadius: 20,
     marginBottom: 15,
     shadowColor: "#000",
@@ -189,6 +200,19 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+  },
+  cardContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 10,
+  },
+  image: {
+    width: 150,
+    height: 150,
+    // borderRadius: 10,
+    marginRight: -30,
+    marginLeft: -20,
+    
   },
   header: {
     flexDirection: "row",
@@ -209,15 +233,15 @@ const styles = StyleSheet.create({
   icon: {
     marginLeft: 10,
   },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 5,
+  },
   buttons: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 5,
   },
   button: {
     flex: 1,
@@ -230,10 +254,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#2265A2",
   },
   edit: {
-    backgroundColor: "#7FADE0",
+    backgroundColor: "#2265A2",
   },
   delete: {
-    backgroundColor: "#E63946",
+    backgroundColor: "#2265A2",
   },
   btnText: {
     color: "#FFF",
