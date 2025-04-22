@@ -11,6 +11,7 @@ import {
   StatusBar,
 
 } from "react-native";
+import HamburgerMenu from "../../components/HamburgerMenu";
 import { Ionicons, MaterialCommunityIcons, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { MotiView } from "moti";
@@ -57,6 +58,7 @@ const sampleMedicines = [
     image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884"
   },
 ];
+
 
 const medicinesData: { [key: number]: typeof sampleMedicines } = {};
 for (let i = 1; i <= 31; i++) {
@@ -237,20 +239,29 @@ const HomeScreen = () => {
           <View style={styles.headerContainer}>
             <View style={styles.headerContent}>
               <View style={styles.userInfo}>
+
                 <Image source={{ uri: userImage }} style={styles.userImage} />
                 <View>
                   <Text style={[styles.greetingText, isDarkMode && styles.darkText]}>{greeting}</Text>
                   <Text style={[styles.userName, isDarkMode && styles.darkText]}>{userName}</Text>
                 </View>
               </View>
-              <TouchableOpacity style={styles.notificationButton}>
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color={isDarkMode ? "#fff" : "#062654"}
-                />
-                <View style={styles.notificationBadge} />
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 16 }}>
+
+                <TouchableOpacity
+                  style={{ marginLeft: 80 }}
+                  onPress={() => router.push("/screens/AddNewMedication")}
+                >
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={35}
+                    color={isDarkMode ? "#fff" : "#062654"}
+                  />
+                </TouchableOpacity>
+
+                <HamburgerMenu />
+              </View>
+
             </View>
             <Text style={[styles.headerSubText, isDarkMode && styles.darkSubText]}>
               Stay on track with your health goals!
@@ -280,7 +291,7 @@ const HomeScreen = () => {
                     animate={{ translateX: 10 }}
                     transition={{
                       type: "timing",
-                      duration: 8000,
+                      duration: 800,
                       loop: true,
                       repeatReverse: true,
                       easing: Easing.inOut(Easing.ease),
@@ -290,7 +301,7 @@ const HomeScreen = () => {
                     <FontAwesome5
                       name="angle-double-right"
                       size={24}
-                      color="#2265A2"
+                      color="#FFD700"
                     />
                   </MotiView>
                 </View>
@@ -319,7 +330,7 @@ const HomeScreen = () => {
                     animate={{ translateX: 10 }}
                     transition={{
                       type: "timing",
-                      duration: 8000,
+                      duration: 800,
                       loop: true,
                       repeatReverse: true,
                       easing: Easing.inOut(Easing.ease),
@@ -329,7 +340,7 @@ const HomeScreen = () => {
                     <FontAwesome5
                       name="angle-double-right"
                       size={24}
-                      color="#2265A2"
+                      color="#FFD700"
                     />
                   </MotiView>
                 </View>
@@ -464,7 +475,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#F5A623',
   },
   sectionContainer: {
     marginBottom: 24,
@@ -474,12 +485,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#202124",
+    color: "#062654",
     fontFamily: 'Inter-SemiBold',
   },
   monthText: {
@@ -490,7 +501,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 14,
-    color: "#2265A2",
+    color: "#062654",
     fontWeight: "500",
     fontFamily: 'Inter-Medium',
   },
@@ -664,13 +675,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: "600",
-    color: "#FFD700",
+    color: "#ffffff",
     marginBottom: 4,
     fontFamily: 'Inter-SemiBold',
   },
   statLabel: {
     fontSize: 12,
-    color: "#E0E0E0",
+    color: "#ffffff",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     fontFamily: 'Inter-Medium',
