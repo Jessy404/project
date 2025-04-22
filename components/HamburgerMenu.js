@@ -81,7 +81,7 @@ const NotificationModal = () => {
                   <Text style={styles.takeAllText}>✓ Taken all</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity>
+                <TouchableOpacity onPress={markAllAsTaken}>
                   <Text style={styles.skipAllText}>Skipped all</Text>
                 </TouchableOpacity>
               </>
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   takeAllButton: {
-    backgroundColor: '#000',
+    backgroundColor: '#062654',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',

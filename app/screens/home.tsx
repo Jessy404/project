@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: "600",
-    color: "#ffffff",
+    color: "#FFD700",
     marginBottom: 4,
     fontFamily: 'Inter-SemiBold',
   },
