@@ -139,6 +139,7 @@ const MedicineItem: React.FC<MedicineItemProps> = ({ item }) => {
     if (isWithin30Minutes && status !== 'done') {
       // In a real app, you would use Push Notifications API here
       console.log(`Time to take ${name}!`);
+
     }
   }, [time, status, name]);
 
@@ -196,11 +197,13 @@ interface ChallengeItemProps {
 const ChallengeItem: React.FC<ChallengeItemProps> = ({ item }) => (
   <View style={styles.challengeContainer}>
     <View style={[styles.challengeIconContainer, { backgroundColor: `${item.color}20` }]}>
+
       <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />
     </View>
     <Text style={styles.challengeTitle}>{item.title}</Text>
     <View style={styles.progressBar}>
-      <View style={[styles.progressFill, { width: `${item.progress}%`, backgroundColor: item.color }]} />
+    <View style={[styles.progressFill, { width: `${item.progress}%`, backgroundColor: item.color }]} />
+
     </View>
     <Text style={[styles.progressText, { color: item.color }]}>{item.progress}%</Text>
   </View>
@@ -274,6 +277,7 @@ const HomeScreen = () => {
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Calendar</Text>
               <Text style={[styles.monthText, isDarkMode && styles.darkSubText]}>{`${currentMonth} ${currentYear}`}</Text>
+
             </View>
             <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
           </View>
