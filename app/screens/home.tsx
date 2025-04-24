@@ -5,46 +5,60 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  ScrollView,
   Image,
   useColorScheme,
+  Platform,
+  StatusBar,
+
 } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-// Removed invalid import
-const userName = "John";
-const userImage = "https://randomuser.me/api/portraits/men/32.jpg";
+import HamburgerMenu from "../../components/HamburgerMenu";
+import { Ionicons, MaterialCommunityIcons, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { MotiView } from "moti";
+import { Easing } from "react-native-reanimated";
+// Constants
+const userName = "Yasmeen";
+const userImage = "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg";
 const currentMonth = new Date().toLocaleString("default", { month: "long" });
 const currentYear = new Date().getFullYear();
 
+// Sample data
 const sampleMedicines = [
   {
     id: "1",
     name: "Ibuprofen",
+    type: "Tablet",
     time: "7:00 PM",
     dose: "2 Tablets",
     schedule: "Before Sleeping",
     icon: "pill",
     status: "done",
+    image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884"
   },
   {
     id: "2",
     name: "Paracetamol",
+    type: "Tablet",
     time: "8:00 PM",
     dose: "1 Tablet",
     schedule: "After Dinner",
     icon: "pill",
     status: "done",
+    image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884"
   },
   {
     id: "3",
     name: "Vitamin C",
+    type: "Capsule",
     time: "9:00 PM",
     dose: "1 Capsule",
     schedule: "Before Bed",
     icon: "pill",
     status: "missed",
+    image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884"
   },
 ];
+
 
 const medicinesData: { [key: number]: typeof sampleMedicines } = {};
 for (let i = 1; i <= 31; i++) {
@@ -52,28 +66,12 @@ for (let i = 1; i <= 31; i++) {
 }
 
 const challenges = [
-  { id: "1", title: "Drink More Water", icon: "cup-water" },
-  { id: "2", title: "Exercise Daily", icon: "run" },
-  { id: "3", title: "Healthy Diet", icon: "food-apple" },
-  { id: "4", title: "Sleep 7 Hours", icon: "bed" },
-  { id: "5", title: "Avoid Sugar", icon: "food-off" },
-  { id: "6", title: "Read Books", icon: "book-open-page-variant" },
-  { id: "7", title: "Meditation", icon: "yoga" },
-  { id: "8", title: "Walk 5 KM", icon: "walk" },
-  { id: "9", title: "Stretching", icon: "human-handsdown" },
-  { id: "10", title: "Play a Sport", icon: "soccer" },
-  { id: "11", title: "Learn Cooking", icon: "chef-hat" },
-  { id: "12", title: "Practice Yoga", icon: "human-handsdown" },
-  { id: "13", title: "Reduce Screen Time", icon: "laptop-off" },
-  { id: "14", title: "Volunteer", icon: "hand-heart" },
-  { id: "15", title: "Spend Time in Nature", icon: "pine-tree" },
-  { id: "16", title: "Write a Journal", icon: "notebook-outline" },
-  { id: "17", title: "Learn a New Skill", icon: "school" },
-  { id: "18", title: "Create Art", icon: "palette" },
-  { id: "19", title: "Listen to Music", icon: "music-circle" },
-  { id: "20", title: "Dance", icon: "dance-ballroom" },
+  { id: "1", title: "Hydration", icon: "cup-water", progress: 80, color: "#7fade0" },
+  { id: "2", title: "Exercise", icon: "run", progress: 65, color: "#50E3C2" },
+  { id: "3", title: "Nutrition", icon: "food-apple", progress: 90, color: "#F5A623" },
 ];
 
+// Components
 interface CalendarProps {
   onSelectDate: (date: number) => void;
   selected: number;
@@ -86,69 +84,131 @@ const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
   const dates = Array.from({ length: 31 }, (_, i) => i + 1);
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator style={styles.calendarScrollView}>
-      <View style={styles.calendarContainer}>
-        {dates.map((date, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.dayContainer, selected === date && styles.selectedDay]}
-            onPress={() => onSelectDate(date)}
-          >
-            <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>{days[index % 7]}</Text>
-            <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
-              <Text style={[styles.dateText, selected === date && styles.selectedDateText]}>{date}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+    <FlatList
+      horizontal
+      data={dates}
+      keyExtractor={(item) => item.toString()}
+      renderItem={({ item: date, index }) => (
+        <TouchableOpacity
+          style={[styles.dayContainer, selected === date && styles.selectedDay]}
+          onPress={() => onSelectDate(date)}
+        >
+          <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>
+            {days[index % 7]}
+          </Text>
+          <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
+            <Text style={[styles.dateText, selected === date && styles.selectedDateText]}>
+              {date}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.calendarContainer}
+    />
   );
 };
 
-
-
 interface MedicineItemProps {
-  name: string;
-  time: string;
-  dose: string;
-  schedule: string;
-  icon: string;
-  status: string;
+  item: typeof sampleMedicines[0];
 }
 
-const MedicineItem: React.FC<MedicineItemProps> = ({ name, time, dose, schedule, icon, status }) => (
-  <View style={styles.medicineItemContainer}>
-    <MaterialCommunityIcons name={icon as any } size={40} color="#3B8C94" style={styles.icon} />
-    <View style={styles.details}>
-      <Text style={styles.medicineName}>{name}</Text>
-      <Text style={styles.scheduleText}>{schedule}</Text>
-      <Text style={styles.doseText}>{dose}</Text>
+const MedicineItem: React.FC<MedicineItemProps> = ({ item }) => {
+  const { name, type, time, dose, schedule, status, image } = item;
+
+  // Check if it's time for medication (simple implementation)
+  const [isTimeForMedication, setIsTimeForMedication] = useState(false);
+
+  useEffect(() => {
+    // Simple check - compare current time with medication time
+    const now = new Date();
+    const [medHour, medMinute] = time.replace(/[APM]/g, '').split(':').map(Number);
+    const isPM = time.includes('PM') && medHour !== 12;
+    const hour24 = isPM ? medHour + 12 : medHour;
+
+    // Check if current time is within 30 minutes of medication time
+    const medicationTime = new Date();
+    medicationTime.setHours(hour24, medMinute, 0, 0);
+
+    const timeDiff = Math.abs(now.getTime() - medicationTime.getTime());
+    const isWithin30Minutes = timeDiff <= 30 * 60 * 1000;
+
+    setIsTimeForMedication(isWithin30Minutes);
+
+    // If it's time for medication, show notification
+    if (isWithin30Minutes && status !== 'done') {
+      // In a real app, you would use Push Notifications API here
+      console.log(`Time to take ${name}!`);
+    }
+  }, [time, status, name]);
+
+  return (
+    <View style={styles.medicineItemContainer}>
+      <Image source={{ uri: image }} style={styles.medicineImage} resizeMode="contain" />
+      <View style={styles.medicineDetails}>
+        <View style={styles.medicineHeader}>
+          <Text style={styles.medicineName}>{name} ({type})</Text>
+          {status === "done" ? (
+            <MaterialCommunityIcons name="check-circle" size={24} color="#34A853" />
+          ) : (
+            <MaterialCommunityIcons
+              name={isTimeForMedication ? "bell-ring" : "alert-circle"}
+              size={24}
+              color={isTimeForMedication ? "#FFA000" : "#062654"}
+            />
+          )}
+        </View>
+
+        <View style={styles.medicineInfoRow}>
+          <MaterialCommunityIcons name="clock-outline" size={18} color="#ffffff" />
+          <Text style={styles.medicineInfoText}>{time}</Text>
+        </View>
+
+        <View style={styles.medicineInfoRow}>
+          <MaterialCommunityIcons name="pill" size={18} color="#ffffff" />
+          <Text style={styles.medicineInfoText}>{dose}</Text>
+        </View>
+
+        <View style={styles.medicineInfoRow}>
+          <MaterialCommunityIcons name="calendar-clock" size={18} color="#ffffff" />
+          <Text style={styles.medicineInfoText}>{schedule}</Text>
+        </View>
+
+        <View style={styles.ratingContainer}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <FontAwesome
+              key={star}
+              name={star <= 3 ? "star" : "star-o"}
+              size={16}
+              color="#FFD700"
+            />
+          ))}
+        </View>
+      </View>
     </View>
-    <View style={styles.statusContainer}>
-      <Text style={styles.timeText}>{time}</Text>
-      <Ionicons
-        name={status === "done" ? "checkmark-done-circle-outline" : "alert-circle-outline"}
-        size={30}
-        color={status === "done" ? "#4CAF50" : "#FF5733"}
-      />
-    </View>
-  </View>
-);
+  );
+};
 
 interface ChallengeItemProps {
-  title: string;
-  icon: string;
+  item: typeof challenges[0];
 }
 
-const ChallengeItem: React.FC<ChallengeItemProps> = ({ title, icon }) => (
+const ChallengeItem: React.FC<ChallengeItemProps> = ({ item }) => (
   <View style={styles.challengeContainer}>
-    <MaterialCommunityIcons name={icon as any} size={30} color="#3B8C94" />
-    <Text style={styles.itemText}>{title}</Text>
+    <View style={[styles.challengeIconContainer, { backgroundColor: `${item.color}20` }]}>
+      <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />
+    </View>
+    <Text style={styles.challengeTitle}>{item.title}</Text>
+    <View style={styles.progressBar}>
+      <View style={[styles.progressFill, { width: `${item.progress}%`, backgroundColor: item.color }]} />
+    </View>
+    <Text style={[styles.progressText, { color: item.color }]}>{item.progress}%</Text>
   </View>
 );
 
+// Main Screen
 const HomeScreen = () => {
-  const [selectedDate, setSelectedDate] = useState(1);
+  const [selectedDate, setSelectedDate] = useState(new Date().getDate());
   const [currentHour, setCurrentHour] = useState(new Date().getHours());
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === "dark";
@@ -161,198 +221,474 @@ const HomeScreen = () => {
   }, []);
 
   const medicines = medicinesData[selectedDate] || [];
-
   const greeting = currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening";
 
+  // Data for the main FlatList
+  const sections = [
+    { type: 'header', id: 'header' },
+    { type: 'calendar', id: 'calendar' },
+    { type: 'medications', id: 'medications', data: medicines },
+    { type: 'challenges', id: 'challenges', data: challenges },
+    { type: 'stats', id: 'stats' }
+  ];
+
+  const renderItem = ({ item }: { item: typeof sections[0] }) => {
+    switch (item.type) {
+      case 'header':
+        return (
+          <View style={styles.headerContainer}>
+            <View style={styles.headerContent}>
+              <View style={styles.userInfo}>
+
+                <Image source={{ uri: userImage }} style={styles.userImage} />
+                <View>
+                  <Text style={[styles.greetingText, isDarkMode && styles.darkText]}>{greeting}</Text>
+                  <Text style={[styles.userName, isDarkMode && styles.darkText]}>{userName}</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 16 }}>
+
+                <TouchableOpacity
+                  style={{ marginLeft: 80 }}
+                  onPress={() => router.push("/screens/AddNewMedication")}
+                >
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={35}
+                    color={isDarkMode ? "#fff" : "#062654"}
+                  />
+                </TouchableOpacity>
+
+                <HamburgerMenu />
+              </View>
+
+            </View>
+            <Text style={[styles.headerSubText, isDarkMode && styles.darkSubText]}>
+              Stay on track with your health goals!
+            </Text>
+          </View>
+        );
+      case 'calendar':
+        return (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Calendar</Text>
+              <Text style={[styles.monthText, isDarkMode && styles.darkSubText]}>{`${currentMonth} ${currentYear}`}</Text>
+            </View>
+            <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
+          </View>
+        );
+      case 'medications':
+        return (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Today's Medication</Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/new')}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.viewAllText}>View All</Text>
+                  <MotiView
+                    from={{ translateX: -10 }}
+                    animate={{ translateX: 10 }}
+                    transition={{
+                      type: "timing",
+                      duration: 800,
+                      loop: true,
+                      repeatReverse: true,
+                      easing: Easing.inOut(Easing.ease),
+                    }}
+                    style={{ padding: 8 }}
+                  >
+                    <FontAwesome5
+                      name="angle-double-right"
+                      size={24}
+                      color="#FFD700"
+                    />
+                  </MotiView>
+                </View>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={Array.isArray(item.data) && item.data.every((med) => 'name' in med) ? item.data : []}
+              horizontal
+              keyExtractor={(med) => med.id}
+              renderItem={({ item: med }) => <MedicineItem item={med} />}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.medicineList}
+            />
+          </View>
+        );
+      case 'challenges':
+        return (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Health Challenges</Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/challenge')}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.viewAllText}>View All</Text>
+                  <MotiView
+                    from={{ translateX: -10 }}
+                    animate={{ translateX: 10 }}
+                    transition={{
+                      type: "timing",
+                      duration: 800,
+                      loop: true,
+                      repeatReverse: true,
+                      easing: Easing.inOut(Easing.ease),
+                    }}
+                    style={{ padding: 8 }}
+                  >
+                    <FontAwesome5
+                      name="angle-double-right"
+                      size={24}
+                      color="#FFD700"
+                    />
+                  </MotiView>
+                </View>
+              </TouchableOpacity>
+
+            </View>
+            <FlatList
+              data={Array.isArray(item.data) && item.data.every((challenge) => 'title' in challenge) ? item.data : []}
+              horizontal
+              keyExtractor={(challenge) => challenge.id}
+              renderItem={({ item }) => <ChallengeItem item={item} />}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.challengeList}
+            />
+          </View>
+        );
+      case 'stats':
+        return (
+          <View style={[styles.statsContainer, isDarkMode ? styles.darkStatsContainer : styles.lightStatsContainer]}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>24</Text>
+              <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Medications</Text>
+            </View>
+            <View style={styles.statSeparator} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>18</Text>
+              <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Completed</Text>
+            </View>
+            <View style={styles.statSeparator} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>85%</Text>
+              <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Success Rate</Text>
+            </View>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <ScrollView style={[styles.container, isDarkMode ? styles.darkMode : styles.lightMode]}>
-      <View style={styles.headerContainer}>
-        <Image source={{ uri: userImage }} style={styles.userImage} />
-        <View style={styles.textContainer}>
-          <Text style={[styles.headerText, isDarkMode && { color: "#fff" }]}>{greeting}, {userName}</Text>
-          <Text style={[styles.headerSubText, isDarkMode && { color: "#ccc" }]}>Stay on track with your health goals!</Text>
-        </View>
-      </View>
-
-      <View style={styles.calendarHeader}>
-        <Text style={[styles.sectionTitle, isDarkMode && { color: "#fff" }]}>Calendar</Text>
-        <Text style={[styles.dateText, isDarkMode && { color: "#ccc" }]}>{`${currentMonth} ${currentYear}`}</Text>
-      </View>
-
-      <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
-
-      <View>
-        <Text style={[styles.sectionTitle, isDarkMode && { color: "#fff" }]}>My Medication</Text>
-        <FlatList
-          data={medicines}
-          horizontal
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MedicineItem {...item} />}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 10 }}
-        />
-      </View>
-
-      <View>
-        <Text style={[styles.sectionTitle, isDarkMode && { color: "#fff" }]}>My Challenges</Text>
-        <FlatList
-          data={challenges}
-          horizontal
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ChallengeItem {...item} />}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 10 }}
-        />
-      </View>
-    </ScrollView>
+    <View style={[styles.container, isDarkMode ? styles.darkContainer : styles.lightContainer]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <FlatList
+        data={sections}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.contentContainer}
+      />
+    </View>
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  lightMode: {
+  contentContainer: {
+    paddingBottom: 24,
+  },
+  lightContainer: {
     backgroundColor: "#FFFFFF",
   },
-  darkMode: {
+  darkContainer: {
     backgroundColor: "#121212",
   },
   headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    marginBottom: 10,
+    padding: 24,
+    paddingBottom: 16,
+    backgroundColor: "#FFFFFF",
+    top: 20,
+    bottom: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 24,
   },
-  icon: {
-    marginRight: 10,
-  },
-  userImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 12,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  headerSubText: {
-    fontSize: 14,
-    color: "#777",
-  },
-  calendarHeader: {
+  headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 15,
-    marginBottom: 5,
+    marginBottom: 8,
+  },
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  userImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 16,
+    borderWidth: 2,
+    borderColor: "#2265A2",
+  },
+  greetingText: {
+    fontSize: 14,
+    color: "#062654",
+    marginBottom: 2,
+    fontFamily: 'Inter-Medium',
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#202124",
+    fontFamily: 'Inter-SemiBold',
+  },
+  darkText: {
+    color: "#FFFFFF",
+  },
+  headerSubText: {
+    fontSize: 14,
+    color: "#5F6368",
+    marginTop: 8,
+    fontFamily: 'Inter-Regular',
+  },
+  darkSubText: {
+    color: "#9AA0A6",
+  },
+  notificationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(26, 115, 232, 0.1)",
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F5A623',
+  },
+  sectionContainer: {
+    marginBottom: 24,
+    paddingHorizontal: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#1565C0",
-  },
-  dateText: {
-    fontSize: 16,
     fontWeight: "600",
-    color: "#0D47A1",
+    color: "#062654",
+    fontFamily: 'Inter-SemiBold',
   },
-  calendarScrollView: {
-    marginVertical: 10,
+  monthText: {
+    fontSize: 14,
+    color: "#5F6368",
+    fontWeight: "500",
+    fontFamily: 'Inter-Medium',
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: "#062654",
+    fontWeight: "500",
+    fontFamily: 'Inter-Medium',
   },
   calendarContainer: {
     flexDirection: "row",
-    paddingHorizontal: 10,
+    paddingBottom: 8,
   },
   dayContainer: {
     alignItems: "center",
-    marginHorizontal: 8,
+    marginHorizontal: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   selectedDay: {
-    borderRadius: 10,
-    padding: 5,
+    backgroundColor: "rgba(26, 115, 232, 0.1)",
+    borderRadius: 12,
   },
   dayText: {
-    fontSize: 14,
-    color: "#0D47A1",
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#5F6368",
+    marginBottom: 6,
+    fontFamily: 'Inter-Medium',
   },
   selectedDayText: {
-    color: "#fff",
+    color: "#062654",
   },
   dateCircle: {
-    backgroundColor: "#FFF",
-    borderRadius: 20,
-    padding: 10,
-    marginTop: 5,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
   },
   selectedDate: {
-    backgroundColor: "#1976D2",
+    backgroundColor: "#062654",
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#202124",
+    fontFamily: 'Inter-Medium',
   },
   selectedDateText: {
-    color: "#fff",
+    color: "#FFFFFF",
+  },
+  medicineList: {
+    paddingRight: 24,
   },
   medicineItemContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F0F4F8",
-    borderRadius: 10,
-    padding: 15,
-    marginVertical: 8,
-    marginHorizontal: 10,
+    backgroundColor: "#062654",
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 16,
+    width: 300,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    minWidth: 280,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: "center",
+    marginVertical: 10,
+    marginHorizontal: 10,
   },
-  details: {
+  medicineImage: {
+    width: 70,
+    height: 70,
+    marginRight: 16,
+  },
+  medicineDetails: {
     flex: 1,
-    marginLeft: 10,
+  },
+  medicineHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
   },
   medicineName: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: "600",
+    color: "#ffffff",
+    fontFamily: 'Inter-SemiBold',
   },
-  scheduleText: {
-    fontSize: 14,
-    color: "#555",
-  },
-  doseText: {
-    fontSize: 13,
-    color: "#777",
-  },
-  statusContainer: {
+  medicineInfoRow: {
+    flexDirection: "row",
     alignItems: "center",
+    marginBottom: 4,
   },
-  timeText: {
+  medicineInfoText: {
     fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
-    marginBottom: 5,
+    color: "#ffffff",
+    marginLeft: 8,
+    fontFamily: 'Inter-Regular',
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    marginTop: 8,
+  },
+  challengeList: {
+    paddingRight: 24,
   },
   challengeContainer: {
-    backgroundColor: "#BBDEFB",
-    padding: 15,
-    marginHorizontal: 10,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    width: 140,
+    backgroundColor: "#062654",
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 16,
+    width: 160,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  itemText: {
-    marginTop: 8,
+  challengeIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  challengeTitle: {
     fontSize: 14,
-    textAlign: "center",
-    color: "#1565C0",
+    fontWeight: "600",
+    color: "#ffffff",
+    marginBottom: 12,
+    fontFamily: 'Inter-SemiBold',
+  },
+  progressBar: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#ffffff",
+    marginBottom: 6,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 12,
+    textAlign: "right",
+    fontFamily: 'Inter-Medium',
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginHorizontal: 24,
+    borderRadius: 16,
+    paddingVertical: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 56,
+  },
+  lightStatsContainer: {
+    backgroundColor: "#062654",
+  },
+  darkStatsContainer: {
+    backgroundColor: "#1E1E1E",
+  },
+  statItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#FFD700",
+    marginBottom: 4,
+    fontFamily: 'Inter-SemiBold',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#ffffff",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    fontFamily: 'Inter-Medium',
+  },
+  statSeparator: {
+    width: 1,
+    backgroundColor: "#E0E0E0",
   },
 });
 
