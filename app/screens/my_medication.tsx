@@ -1,106 +1,71 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, Pressable } from "react-native";
 import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-type Medication = {
-  id: string;
+type User = {
+  id: string | number;
   name: string;
-  type: string;
-  time: string;
-  dose: string;
-  expiry: string;
-  taken: boolean;
-  rating: number;
-  image?: string;
+  username: string;
+  mutualFriends: number;
+  imageUrl?: string;
 };
 
-const MyMedication = () => {
+const initialUsers: User[] = [
+  { id: 1, name: "Leanne Graham", username: "Bret", mutualFriends: 32, imageUrl: "https://placehold.co/345" },
+  { id: 2, name: "Ervin Howell", username: "Antonette", mutualFriends: 18, imageUrl: "https://placehold.co/287" },
+  { id: 3, name: "Clementine Bauch", username: "Samantha", mutualFriends: 51, imageUrl: "https://placehold.co/482" },
+  { id: 4, name: "Patricia Lebsack", username: "Karianne", mutualFriends: 9, imageUrl: "https://placehold.co/234" },
+  { id: 5, name: "Chelsey Dietrich", username: "Kamren", mutualFriends: 63, imageUrl: "https://placehold.co/512" },
+  { id: 6, name: "Mrs. Dennis Schulist", username: "Leopoldo_Corkery", mutualFriends: 27, imageUrl: "https://placehold.co/456" },
+  { id: 7, name: "Kurtis Weissnat", username: "Elwyn.Skiles", mutualFriends: 42, imageUrl: "https://placehold.co/398" },
+  { id: 8, name: "Nicholas Runolfsdottir V", username: "Maxime_Nienow", mutualFriends: 5, imageUrl: "https://placehold.co/189" },
+  { id: 9, name: "Glenna Reichert", username: "Delphine", mutualFriends: 71, imageUrl: "https://placehold.co/573" },
+  { id: 10, name: "Clementina DuBuque", username: "Moriah.Stanton", mutualFriends: 12, imageUrl: "https://placehold.co/297" },
+];
+
+const UserScreen = () => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
-  const [medications, setMedications] = useState<Medication[]>([
-    { id: "1", name: "Paracetamol", type: "Tablet", time: "08:00 AM", dose: "500mg", expiry: "12/2025", taken: false, rating: 0, image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884" },
-    { id: "2", name: "Vitamin C", type: "Syrup", time: "12:00 PM", dose: "1000mg", expiry: "06/2024", taken: false, rating: 0, image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884" },
-    { id: "3", name: "Ibuprofen", type: "Injection", time: "06:00 PM", dose: "400mg", expiry: "09/2026", taken: false, rating: 0, image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884" },
-  ]);
+  const [users, setUsers] = useState<User[]>(initialUsers);
 
-  const handleTaken = (id: string) => {
-    setMedications((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, taken: true } : item))
-    );
-  };
+  const handleViewProfile = useCallback((id: string | number) => {
+    setUsers((prev) => prev.filter((item) => item.id !== id));
+  }, []);
 
-  const handleDelete = (id: string) => {
-    setMedications((prev) => prev.filter((item) => item.id !== id));
-  };
+  const handleDeleteUser = useCallback((id: string | number) => {
+    setUsers((prev) => prev.filter((item) => item.id !== id));
+  }, []);
 
-  const handleRating = (id: string, rating: number) => {
-    setMedications((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, rating } : item))
-    );
-  };
+  const handleRefresh = useCallback(() => {
+    setUsers(initialUsers);
+    // يمكنك هنا إضافة منطق إضافي لإعادة جلب البيانات من مصدر خارجي إذا لزم الأمر
+  }, []);
 
-  const handleViewDetails = (id: string) => {
-    router.push(`/screens/MedicationDetail?id=${id}`);
-  };
-
-  const handleAddMedication = () => {
-    router.push("/screens/AddNewMedication");
-  };
-
-  const filteredMedications = medications.filter((item) =>
+  const filteredUsers = users.filter((item) =>
     item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.dose.toLowerCase().includes(searchText.toLowerCase())
+    item.username.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const renderItem = ({ item }: { item: Medication }) => {
-    if (!item) return null;
-
+  const renderItem = ({ item }: { item: User }) => {
     return (
       <View style={styles.card}>
         <View style={styles.cardContent}>
-          {item.image && (
-            <Image
-              source={{ uri: item.image }}
-              style={styles.image}
-              resizeMode="cover"
-            />
+          {item.imageUrl && (
+            <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" />
           )}
           <View style={{ flex: 1 }}>
-            <View style={styles.header}>
-              <Text style={styles.medName}>{item.name} ({item.type})</Text>
-              {item.taken ? (
-                <FontAwesome5 name="check-double" size={20} color="green" style={styles.icon} />
-              ) : (
-                <FontAwesome5 name="pills" size={20} color="#2265A2" style={styles.icon} />
-              )}
-            </View>
-            <View style={styles.ratingContainer}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => handleRating(item.id, star)}>
-                  <FontAwesome
-                    name={item.rating >= star ? "star" : "star-o"}
-                    size={18}
-                    color={item.rating >= star ? "#FFD700" : "#CCC"}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text style={styles.details}>Time: <FontAwesome5 name="clock" /> {item.time}</Text>
-            <Text style={styles.details}>Dose: <FontAwesome5 name="capsules" /> {item.dose}</Text>
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.mutualFriends}>
+              {item.mutualFriends} mutual friends
+            </Text>
           </View>
         </View>
         <View style={styles.buttons}>
-          {!item.taken && (
-            <TouchableOpacity style={[styles.button, styles.taken]} onPress={() => handleTaken(item.id)}>
-              <Text style={styles.btnText}>Taken</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={[styles.button, styles.edit]} onPress={() => handleViewDetails(item.id)}>
-            <Text style={styles.btnText}>View</Text>
+          <TouchableOpacity style={[styles.button, styles.view]} onPress={() => handleViewProfile(item.id)}>
+            <Text style={styles.btnText}>confirm</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.delete]} onPress={() => handleDelete(item.id)}>
+          <TouchableOpacity style={[styles.button, styles.delete]} onPress={() => handleDeleteUser(item.id)}>
             <Text style={styles.btnText}>Delete</Text>
           </TouchableOpacity>
         </View>
@@ -110,36 +75,38 @@ const MyMedication = () => {
 
   return (
     <View style={styles.container}>
-      {/* <View style={styles.topHalfCircle}></View> */}
 
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>My Medication</Text>
-        <View style={styles.searchContainer}>
-          <FontAwesome5 name="search" size={18} color="#888" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search..."
-            value={searchText}
-            onChangeText={(text) => setSearchText(text.trimStart())}
-            placeholderTextColor="#AAA"
-          />
-        </View>
-      </View>
+        <Text style={styles.title}>
+          frinds requests
+        </Text>
 
-      {filteredMedications.length === 0 ? (
-        <Text style={{ textAlign: 'center', color: '#888', marginTop: 20 }}>No medications found.</Text>
+        <Pressable onPress={() => router.push("/screens/MedicationDetail")}>
+          <FontAwesome5 name="info" size={18} color="#888" style={styles.searchIcon} />
+        </Pressable>
+
+      </View>
+      <View style={styles.searchContainer}>
+        <FontAwesome5 name="search" size={18} color="#888" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search users..."
+          value={searchText}
+          onChangeText={(text) => setSearchText(text.trimStart())}
+          placeholderTextColor="#AAA"
+        />
+      </View>
+      <TouchableOpacity style={[styles.button1, styles.view]} onPress={handleRefresh} >
+        <Text style={styles.btnText}>refresh</Text>
+      </TouchableOpacity>
+      {filteredUsers.length === 0 ? (
+        <Text style={{ textAlign: 'center', color: '#888', marginTop: 20 }}>No users found.</Text>
       ) : (
         <FlatList
-          data={filteredMedications}
-          keyExtractor={(item) => item.id}
+          data={filteredUsers}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={
-            <TouchableOpacity style={styles.addButton} onPress={handleAddMedication}>
-              <FontAwesome5 name="plus" size={20} color="#FFF" />
-              <Text style={styles.addButtonText}>Add Medication</Text>
-            </TouchableOpacity>
-          }
         />
       )}
     </View>
@@ -152,19 +119,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     padding: 20,
   },
-  topHalfCircle: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "40%",
-    backgroundColor: "#2265A2",
-    borderBottomLeftRadius: 100,
-    borderBottomRightRadius: 100,
-  },
   headerContainer: {
     marginTop: 40,
     marginBottom: 20,
+    gap : 10,
+    textAlign: "left",
+    justifyContent: 'space-between',
+    flexDirection: 'row',
   },
   title: {
     fontSize: 26,
@@ -192,7 +153,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#FFF",
-    padding: 10,
+    padding: 15,
     borderRadius: 20,
     marginBottom: 15,
     shadowColor: "#000",
@@ -203,83 +164,65 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     marginBottom: 10,
   },
   image: {
-    width: 150,
-    height: 150,
-    // borderRadius: 10,
-    marginRight: -30,
-    marginLeft: -20,
-    
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 15,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 5,
-  },
-  medName: {
+  name: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#2265A2",
   },
-  details: {
+  username: {
     fontSize: 14,
-    color: "#555",
+    color: "#777",
     marginBottom: 5,
   },
-  icon: {
-    marginLeft: 10,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 5,
+  mutualFriends: {
+    fontSize: 14,
+    color: "#555",
   },
   buttons: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
+
   },
   button: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 20,
-    alignItems: "center",
+    borderRadius: 10,
     marginHorizontal: 5,
+    alignItems: "center",
+
   },
-  taken: {
-    backgroundColor: "#2265A2",
+  button1: {
+
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    alignItems: "center",
+
   },
-  edit: {
+  view: {
     backgroundColor: "#2265A2",
   },
   delete: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#333",
   },
   btnText: {
     color: "#FFF",
     fontWeight: "bold",
     fontSize: 14,
   },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#2265A2",
-    paddingVertical: 12,
-    borderRadius: 20,
-    marginBottom: 60,
-    marginTop: 10,
-  },
-  addButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginLeft: 8,
-  },
+  refresh: {
+    height: 50,
+  }
 });
 
-export default MyMedication;
+export default UserScreen;
