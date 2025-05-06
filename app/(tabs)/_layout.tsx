@@ -96,7 +96,7 @@ export default function TabLayout() {
                 <FontAwesome5
                   name="minus-circle"
                   size={12}
-                  color="red"
+                  color={focused ? color : 'transparent'}
                   style={{
                     position: 'absolute',
                     top: -4,
