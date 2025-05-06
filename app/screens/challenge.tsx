@@ -1,309 +1,164 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View, Text, Alert, TextInput, StyleSheet,
-  FlatList, KeyboardAvoidingView, Platform
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { LineChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
-import { TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth, db } from "../../config/firebaseConfig"
-const screenWidth = Dimensions.get('window').width;
+import React, { useState } from "react";
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 
-const daysMapping = {
-  Monday: 0, Tuesday: 1, Wednesday: 2,
-  Thursday: 3, Friday: 4, Saturday: 5, Sunday: 6,
+interface Challenge {
+  id: string;
+  title: string;
+  image: string;
+  rating: number;
+}
+
+const challenges: Challenge[] = [
+  { id: "1", title: "Drink 2 liters of water today 💧", image: "https://img.icons8.com/ios-filled/100/000000/water.png", rating: 0 },
+  { id: "2", title: "Walk 10,000 steps 🚶‍♂", image: "https://img.icons8.com/ios-filled/100/000000/walking.png", rating: 0 },
+  { id: "3", title: "Eat 5 servings of fruits or vegetables 🍎🥦", image: "https://img.icons8.com/ios-filled/100/000000/vegetarian-food.png", rating: 0 },
+  { id: "4", title: "Sleep for 7 hours straight 😴", image: "https://img.icons8.com/ios-filled/100/000000/sleeping.png", rating: 0 },
+  { id: "5", title: "Avoid processed sugar today 🚫🍭", image: "https://img.icons8.com/ios-filled/100/000000/no-sugar.png", rating: 0 },
+  { id: "6", title: "Meditate for 10 minutes 🧘‍♀", image: "https://www.pngmart.com/files/5/Meditating-PNG-Pic.png", rating: 0  },
+  { id: "7", title: "No phone use 1 hour before bed 📵", image: "https://cdn-icons-png.flaticon.com/512/223/223358.png", rating: 0  },
+  { id: "8", title: "Read for 30 minutes 📖", image: "https://img.icons8.com/ios-filled/100/000000/book.png", rating: 0 },
+  { id: "9", title: "Do 15 minutes of stretching 🏋‍♀", image: "https://www.pngmart.com/files/15/Vector-Exercise-Stretching-PNG-Clipart.png", rating: 0 },
+  { id: "10", title: "Write down three things you're grateful for ✍", image: "https://img.icons8.com/ios-filled/100/000000/journal.png", rating: 0 },
+  { id: "11", title: "Drink a healthy smoothie 🥤", image: "https://cdn1.iconfinder.com/data/icons/diet-and-nutrition-10/64/drink-juice-smoothie-beverage-healthy-512.png", rating: 0 },
+  { id: "12", title: "Spend 30 minutes outdoors 🌳", image: "https://img.icons8.com/ios-filled/100/000000/park-bench.png", rating: 0 },
+  { id: "13", title: "Practice deep breathing for 5 minutes 🌬", image: "https://cdn2.iconfinder.com/data/icons/self-care-solid/64/breath-deep-breathing-woman-meditation-self_care-self_love-512.png", rating: 0 },
+  { id: "14", title: "Limit caffeine intake ☕", image: "https://cdn3.iconfinder.com/data/icons/eco-food-and-cosmetic-labels-4/128/caffeine_free_1-1024.png", rating: 0 },
+  ];
+
+
+interface CustomRatingProps {
+  rating: number;
+  onRatingChange: (rating: number) => void;
+  size?: number;
+}
+
+const CustomRating: React.FC<CustomRatingProps> = ({ rating, onRatingChange, size = 20 }) => {
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      {Array.from({ length: 5 }, (_, index) => {
+        const starNumber = index + 1;
+        return (
+          <TouchableOpacity key={starNumber} onPress={() => onRatingChange(starNumber)}>
+            <FontAwesome
+              name={starNumber <= rating ? 'star' : 'star-o'}
+              size={size}
+              color={starNumber <= rating ? '#FFD700' : '#ccc'}
+              style={{ marginHorizontal: 2 }}
+            />
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
 };
 
-function sigmoid(x: number) {
-  return 1 / (1 + Math.exp(-x));
-}
+const ChallengeScreen: React.FC = () => {
+  const [challengeList, setChallengeList] = useState<Challenge[]>(challenges);
 
-function predictMissProbability(entry: { time: any; day: any; online: any; lastInterval: any; }, weights: { coeffs: any; bias: any; }) {
-  const x = [
-    entry.time === 'morning' ? 0 : 1,
-    daysMapping[entry.day as keyof typeof daysMapping],
-    entry.online,
-    entry.lastInterval,
-  ];
-  let z = weights.bias;
-  for (let i = 0; i < weights.coeffs.length; i++) {
-    z += weights.coeffs[i] * x[i];
-  }
-  return sigmoid(z);
-}
-
-const App = () => {
-  const [time, setTime] = useState('morning');
-  const [day, setDay] = useState('Monday');
-  const [online, setOnline] = useState('1');
-  const [lastInterval, setLastInterval] = useState('');
-  const [predictedProb, setPredictedProb] = useState<number | null>(null);
-  const [graphData, setGraphData] = useState<number[]>([]);
-  interface Entry {
-    id: string;
-    time: string;
-    day: string;
-    online: string;
-    lastInterval: string;
-    probability: string;
-  }
-
-  const [entries, setEntries] = useState<Entry[]>([]);
-
-  const weights = {
-    coeffs: [1.2, 0.3, -0.8, 0.5],
-    bias: -4.5,
+  const handleChallengePress = (id: string) => {
+    alert('Success!✅');
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const key = `missEntries-${user.uid}`;
-        const saved = await AsyncStorage.getItem(key);
-        if (saved) {
-          setEntries(JSON.parse(saved));
-          setGraphData(JSON.parse(saved).map((e: { probability: string; }) => parseFloat(e.probability)));
-        }
-      }
-    };
-    loadData();
-  }, []);
-
-  const handlePredict = async () => {
-    const user = auth.currentUser;
-    if (!user) {
-      Alert.alert('Error', 'You must be logged in to use prediction.');
-      return;
-    }
-  
-    if (!lastInterval) {
-      Alert.alert('Missing Input', 'Please enter hours since last dose.');
-      return;
-    }
-  
-    const entry = {
-      time,
-      day,
-      online: parseInt(online),
-      lastInterval: parseFloat(lastInterval),
-    };
-  
-    const prob = predictMissProbability(entry, weights);
-    setPredictedProb(prob);
-  
-    const newEntry = {
-      id: Date.now().toString(),
-      time,
-      day,
-      online: online === '1' ? 'Yes' : 'No',
-      lastInterval,
-      probability: (prob * 100).toFixed(2),
-    };
-  
-    const updatedEntries = [...entries, newEntry];
-    setEntries(updatedEntries);
-    setGraphData((prev) => [...prev, prob * 100]);
-  
-    await AsyncStorage.setItem(`missEntries-${user.uid}`, JSON.stringify(updatedEntries));
-  
-    if (prob > 0.7) {
-      Alert.alert('Reminder', 'You might forget this dose. Please be careful!');
-    }
-  };
-  
-  const clearEntries = async () => {
-    try {
-      await AsyncStorage.removeItem('missEntries');
-      setEntries([]);
-      Alert.alert('Data Cleared', 'All saved predictions have been removed.');
-    } catch (e) {
-      console.error('Failed to clear entries:', e);
-    }
+  const handleRatingChange = (id: string, rating: number) => {
+    setChallengeList((prevChallenges) =>
+      prevChallenges.map((challenge) =>
+        challenge.id === id ? { ...challenge, rating } : challenge
+      )
+    );
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
+    <View style={styles.container} pointerEvents="auto">
       <FlatList
-       showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View>
-            <Text style={styles.title}>Miss Prediction AI</Text>
-
-            <Text style={styles.label}>Time of Day</Text>
-            <Picker selectedValue={time} onValueChange={setTime} style={styles.picker}>
-              <Picker.Item label="Morning" value="morning" />
-              <Picker.Item label="Night" value="night" />
-            </Picker>
-
-            <Text style={styles.label}>Day of the Week</Text>
-            <Picker selectedValue={day} onValueChange={setDay} style={styles.picker}>
-              {Object.keys(daysMapping).map((d) => (
-                <Picker.Item key={d} label={d} value={d} />
-              ))}
-            </Picker>
-
-            <Text style={styles.label}>Was the device online?</Text>
-            <Picker selectedValue={online} onValueChange={setOnline} style={styles.picker}>
-              <Picker.Item label="Yes" value="1" />
-              <Picker.Item label="No" value="0" />
-            </Picker>
-
-            <Text style={styles.label}>Hours since last dose</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={lastInterval}
-              onChangeText={setLastInterval}
-              placeholder="e.g., 5"
-              placeholderTextColor="#888"
-            />
-
-            <TouchableOpacity style={styles.button} onPress={handlePredict}>
-              <Text style={styles.buttonText}>Predict Next Dose</Text>
-            </TouchableOpacity>
-
-            {predictedProb !== null && (
-              <Text style={styles.resultText}>
-                Prediction: {(predictedProb * 100).toFixed(2)}%
-              </Text>
-            )}
-
-            {graphData.length > 0 && (
-              <LineChart
-                data={{
-                  labels: graphData.map((_, i) => (i + 1).toString()),
-                  datasets: [{ data: graphData }],
-                }}
-                width={screenWidth - 40}
-                height={220}
-                yAxisSuffix="%"
-                chartConfig={{
-                  backgroundColor: '#ffffff',
-                  backgroundGradientFrom: '#ffffff',
-                  backgroundGradientTo: '#ffffff',
-                  decimalPlaces: 2,
-                  color: (opacity = 1) => `rgba(6, 38, 84, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                  propsForDots: {
-                    r: '6',
-                    strokeWidth: '2',
-                    stroke: '#FFD700',
-                  },
-                }}
-                bezier
-                style={{
-                  marginVertical: 20,
-                  borderRadius: 16,
-                }}
-              />
-            )}
-
-            {entries.length > 0 && (
-              <Text style={styles.label}>Saved Predictions</Text>
-            )}
-
-            <TouchableOpacity style={styles.clearButton} onPress={clearEntries}>
-              <Text style={styles.clearButtonText}>Clear Saved Predictions</Text>
-            </TouchableOpacity>
-          </View>
-        }
-        data={entries}
+        data={challengeList}
         keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 5 }}
+        ListHeaderComponent={<Text style={styles.header}>My Challenge</Text>}
         renderItem={({ item }) => (
-          <View style={styles.entryItem}>
-            <Text style={styles.entryText}>
-              {item.day}, {item.time} | Online: {item.online} | {item.lastInterval}h → {item.probability}%
-            </Text>
+          <View style={styles.challengeItem}>
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: item.image }} style={styles.challengeImage} />
+            </View>
+            <View style={styles.textContainer}>
+              <Text style={styles.challengeText}>{item.title}</Text>
+              <CustomRating
+                rating={item.rating}
+                onRatingChange={(newRating) => handleRatingChange(item.id, newRating)}
+                size={16}
+              />
+            </View>
+            <TouchableOpacity style={styles.button} onPress={() => handleChallengePress(item.id)}>
+              <Text style={styles.buttonText}>Join</Text>
+            </TouchableOpacity>
           </View>
         )}
       />
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f6fa',
+    backgroundColor: "#ffffff",
     padding: 20,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#062654',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  label: {
+  header: {
+    fontSize: 20,
+    paddingTop: 20,
+    fontWeight: '900',
+    textAlign: "center",
     marginTop: 15,
-    fontSize: 16,
-    color: '#062654',
-    fontWeight: '600',
+    marginBottom: 5,
+    color: "#062654",
   },
-  picker: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+  challengeItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EAF0F7",
     padding: 10,
-    backgroundColor: '#fff',
-    color: '#062654',
-    marginTop: 5,
-    marginBottom: 15,
+    margin: 5,
+    marginVertical: 8,
+    borderRadius: 25,
+    elevation: 3,
+  },
+  imageContainer: {
+    backgroundColor: "#7FADE0",
+    padding: 10,
+    borderRadius: 20,
+    marginRight: 10,
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  challengeImage: {
+    width: 50,
+    height: 50,
+    resizeMode: "contain"
+  },
+  textContainer: {
+    flex: 3,
+  },
+  challengeText: {
+    fontSize: 14,
+    color: "#000",
+    marginBottom: 5,
+    fontWeight: '500',
   },
   button: {
-    backgroundColor: '#FFD700',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
+    backgroundColor: "#2265A2",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 15,
   },
   buttonText: {
-    fontWeight: 'bold',
-    color: '#062654',
-    fontSize: 16,
-  },
-  resultText: {
-    marginTop: 20,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#062654',
-    textAlign: 'center',
-  },
-  entryItem: {
-    backgroundColor: '#fff',
-    padding: 10,
-    marginVertical: 5,
-    borderRadius: 8,
-    borderColor: '#ddd',
-    borderWidth: 1,
-  },
-  entryText: {
+    color: "#fff",
     fontSize: 14,
-    color: '#062654',
-  },
-  clearButton: {
-    backgroundColor: '#ff4d4d',
-    padding: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 15,
-  },
-  clearButtonText: {
-    fontWeight: 'bold',
-    color: '#fff',
-    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
-export default App;
+export default ChallengeScreen;
