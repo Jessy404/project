@@ -130,6 +130,7 @@ const App = () => {
       style={styles.container}
     >
       <FlatList
+       showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View>
             <Text style={styles.title}>Miss Prediction AI</Text>
