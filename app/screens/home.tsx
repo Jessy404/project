@@ -74,35 +74,37 @@ interface CalendarProps {
 }
 
 const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
-    const days = Array.from({ length: 31 }, (_, i) =>
-        ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][i % 7]
-    );
-    const dates = Array.from({ length: 31 }, (_, i) => i + 1);
 
-    return (
-        <FlatList
-            horizontal
-            data={dates}
-            keyExtractor={(item) => item.toString()}
-            renderItem={({ item: date, index }) => (
-                <TouchableOpacity
-                    style={[styles.dayContainer, selected === date && styles.selectedDay]}
-                    onPress={() => onSelectDate(date)}
-                >
-                    <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>
-                        {days[index % 7]}
-                    </Text>
-                    <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
-                        <Text style={[styles.dateText, selected === date && styles.selectedDateText]}>
-                            {date}
-                        </Text>
-                    </View>
-                </TouchableOpacity>
-            )}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.calendarContainer}
-        />
-    );
+  const days = Array.from({ length: 31 }, (_, i) =>
+    [ "THU", "FRI", "SAT","SUN", "MON", "TUE", "WED"][i % 7]
+  );
+  const dates = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  return (
+    <FlatList
+      horizontal
+      data={dates}
+      keyExtractor={(item) => item.toString()}
+      renderItem={({ item: date, index }) => (
+        <TouchableOpacity
+          style={[styles.dayContainer, selected === date && styles.selectedDay]}
+          onPress={() => onSelectDate(date)}
+        >
+          <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>
+            {days[index % 7]}
+          </Text>
+          <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
+            <Text style={[styles.dateText, selected === date && styles.selectedDateText]}>
+              {date}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.calendarContainer}
+    />
+  );
+
 };
 
 interface MedicineItemProps {
