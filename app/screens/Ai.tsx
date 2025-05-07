@@ -131,28 +131,53 @@ const Ai = () => {
     >
       <FlatList
        showsVerticalScrollIndicator={false}
+       contentContainerStyle={{ paddingBottom:40}}
         ListHeaderComponent={
           <View>
             <Text style={styles.title}>Miss Dose (AI Prediction )</Text>
 
             <Text style={styles.label}>Time of Day</Text>
-            <Picker selectedValue={time} onValueChange={setTime} style={styles.picker}>
-              <Picker.Item label="Morning" value="morning" />
-              <Picker.Item label="Night" value="night" />
-            </Picker>
+            <Text style={[styles.label, { fontSize: 14 }]}>Was the device online?</Text>
+<View style={[styles.input, { height: 40 }]}>
+  <Picker
+    selectedValue={online}
+    onValueChange={setOnline}
+    style={{ color: '#062654', fontSize: 13 }}
+    itemStyle={{ fontSize: 13 }}
+    dropdownIconColor="#062654"
+  >
+    <Picker.Item label="Yes" value="1" />
+    <Picker.Item label="No" value="0" />
+  </Picker>
+</View>
 
-            <Text style={styles.label}>Day of the Week</Text>
-            <Picker selectedValue={day} onValueChange={setDay} style={styles.picker}>
-              {Object.keys(daysMapping).map((d) => (
-                <Picker.Item key={d} label={d} value={d} />
-              ))}
-            </Picker>
+<Text style={[styles.label, { fontSize: 14 }]}>Day of the Week</Text>
+<View style={[styles.input, { height: 40 }]}>
+  <Picker
+    selectedValue={day}
+    onValueChange={setDay}
+    style={{ color: '#062654', fontSize: 13 }}
+    itemStyle={{ fontSize: 13 }}
+    dropdownIconColor="#062654"
+  >
+    {Object.keys(daysMapping).map((d) => (
+      <Picker.Item key={d} label={d} value={d} />
+    ))}
+  </Picker>
+</View>
 
-            <Text style={styles.label}>Was the device online?</Text>
-            <Picker selectedValue={online} onValueChange={setOnline} style={styles.picker}>
-              <Picker.Item label="Yes" value="1" />
-              <Picker.Item label="No" value="0" />
-            </Picker>
+<View style={[styles.input, { height: 40 }]}>
+  <Picker
+    selectedValue={time}
+    onValueChange={setTime}
+    style={{ color: '#062654', fontSize: 13 }}
+    itemStyle={{ fontSize: 13 }}
+    dropdownIconColor="#062654"
+  >
+    <Picker.Item label="Morning" value="morning" />
+    <Picker.Item label="Night" value="night" />
+  </Picker>
+</View>
 
             <Text style={styles.label}>Hours since last dose</Text>
             <TextInput
@@ -230,48 +255,60 @@ const Ai = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f6fa',
+    backgroundColor: '#ffffff',
     padding: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
     color: '#062654',
-    top: 20,
     textAlign: 'center',
+    marginTop:30,
     marginBottom: 26,
   },
   label: {
     marginTop: 15,
     fontSize: 16,
-    color: '#062654',
+    color: '#2265A2',
     fontWeight: '600',
   },
   picker: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: 12,
+    borderColor: '#7FADE0',
+    borderWidth: 1,
+    height: 40, 
+    justifyContent: 'center',
   },
+  
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
+    borderColor: '#7FADE0',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 0, 
     backgroundColor: '#fff',
     color: '#062654',
     marginTop: 5,
     marginBottom: 15,
+    height: 40, 
+    justifyContent:'center',
   },
   button: {
-    backgroundColor: '#FFD700',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: '#7FADE0',
+    padding: 16,
+    borderRadius: 16,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 12,
+    shadowColor: '#2265A2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   buttonText: {
     fontWeight: 'bold',
-    color: '#062654',
+    color: '#fff',
     fontSize: 16,
   },
   resultText: {
@@ -282,29 +319,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   entryItem: {
-    backgroundColor: '#fff',
-    padding: 10,
-    marginVertical: 5,
-    borderRadius: 8,
-    borderColor: '#ddd',
+    backgroundColor: '#ffffff',
+    padding: 12,
+    marginVertical: 6,
+    borderRadius: 12,
+    borderColor: '#7FADE0',
     borderWidth: 1,
+    shadowColor: '#7FADE0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   entryText: {
     fontSize: 14,
     color: '#062654',
   },
   clearButton: {
-    backgroundColor: '#ff4d4d',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: '#062654',
+    padding: 12,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: 20,
+    shadowColor: '#ff4d4d',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
   },
   clearButtonText: {
     fontWeight: 'bold',
     color: '#fff',
-    fontSize: 16,
-  },
+    fontSize:16,
+},
 });
 
 export default Ai;
