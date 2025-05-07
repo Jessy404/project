@@ -74,10 +74,12 @@ interface CalendarProps {
 }
 
 const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
-    const days = Array.from({ length: 31 }, (_, i) =>
-        ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][i % 7]
-    );
-    const dates = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  const days = Array.from({ length: 31 }, (_, i) =>
+    [ "THU", "FRI", "SAT","SUN", "MON", "TUE", "WED"][i % 7]
+  );
+  const dates = Array.from({ length: 31 }, (_, i) => i + 1);
+ 
 
     return (
         <FlatList

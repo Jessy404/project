@@ -67,7 +67,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="challenge"
         options={{
-          tabBarLabel: "challenge",
+          tabBarLabel: "AI",
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <MaterialCommunityIcons
