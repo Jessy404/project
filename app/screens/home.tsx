@@ -15,11 +15,13 @@ import { Ionicons, MaterialCommunityIcons, FontAwesome, FontAwesome5 } from "@ex
 import { router } from "expo-router";
 import { MotiView } from "moti";
 import { Easing } from "react-native-reanimated";
-import { auth, db, firestore   } from '../../config/firebaseConfig'; // تأكد من استيراد firestore
-import { doc, getDoc, collection } from 'firebase/firestore'; // استيراد الدوال الصحيحة لـ Firestore
+
+import { auth, db   } from '../../config/firebaseConfig'; 
+import { doc, getDoc, collection } from 'firebase/firestore'; 
 import { useContext } from 'react';
 import { userDetailContext } from "../../context/userDetailContext";
-// Sample data (خليه زي ما هو)
+
+
 const sampleMedicines = [
     {
         id: "1",
@@ -81,30 +83,31 @@ const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
   const dates = Array.from({ length: 31 }, (_, i) => i + 1);
  
 
-    return (
-        <FlatList
-            horizontal
-            data={dates}
-            keyExtractor={(item) => item.toString()}
-            renderItem={({ item: date, index }) => (
-                <TouchableOpacity
-                    style={[styles.dayContainer, selected === date && styles.selectedDay]}
-                    onPress={() => onSelectDate(date)}
-                >
-                    <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>
-                        {days[index % 7]}
-                    </Text>
-                    <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
-                        <Text style={[styles.dateText, selected === date && styles.selectedDateText]}>
-                            {date}
-                        </Text>
-                    </View>
-                </TouchableOpacity>
-            )}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.calendarContainer}
-        />
-    );
+  return (
+    <FlatList
+      horizontal
+      data={dates}
+      keyExtractor={(item) => item.toString()}
+      renderItem={({ item: date, index }) => (
+        <TouchableOpacity
+          style={[styles.dayContainer, selected === date && styles.selectedDay]}
+          onPress={() => onSelectDate(date)}
+        >
+          <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>
+            {days[index % 7]}
+          </Text>
+          <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
+            <Text style={[styles.dateText, selected === date && styles.selectedDateText]}>
+              {date}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.calendarContainer}
+    />
+  );
+
 };
 
 interface MedicineItemProps {
@@ -215,42 +218,44 @@ const HomeScreen = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    console.log("المستخدم الحالي:", auth.currentUser);
-    console.log("قاعدة البيانات Firestore:", db);
+
+    console.log("currentUser", auth.currentUser);
+    console.log("Firestore:", db);
 
     const fetchUserData = async () => {
-        const user = auth.currentUser;
-        if (user) {
-            try {
-                const userRef = doc(db, "users", user.uid); // الطريقة الصحيحة لجلب مستند المستخدم
-                const userDoc = await getDoc(userRef);
+      const user = auth.currentUser;
+      if (user) {
+          try {
+              const userRef = doc(db, "users", user.uid);
+              const userDoc = await getDoc(userRef);
 
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    console.log("تم جلب بيانات المستخدم من Firestore:", userData);
+              if (userDoc.exists()) {
+                  const userData = userDoc.data();
+                  console.log("User data fetched from Firestore:", userData);
 
-                    setLoggedInUserName(userData?.name || 'Guest'); 
-                    setLoggedInUserImage(userData?.photoURL || "https://via.placeholder.com/150");
-                } else {
-                    console.log("لم يتم العثور على مستند المستخدم في Firestore للـ UID:", user.uid);
-                }
-            } catch (error) {
-                console.error("خطأ أثناء جلب بيانات المستخدم من Firestore:", error);
-            }
-        } else {
-            console.log("لا يوجد مستخدم مسجل حالياً.");
-        }
-    };
+                  setLoggedInUserName(userData?.name || 'Guest');
+                  setLoggedInUserImage(userData?.photoURL || "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg");
+              } else {
+                  console.log("User document not found in Firestore for UID:", user.uid);
+              }
+          } catch (error) {
+              console.error("Error during fetching user data from Firestore:", error);
+          }
+      } else {
+          console.log("No user is currently logged in.");
+      }
+  };
 
-    fetchUserData();
+  fetchUserData();
 
-    const unsubscribe = auth.onAuthStateChanged(user => {
-        if (user) {
-            fetchUserData();
-        }
-    });
+  const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+          fetchUserData();
+      }
+  });
 
-    return () => unsubscribe();
+  return () => unsubscribe();
+
 }, []);
 
 useEffect(() => {
@@ -277,7 +282,9 @@ useEffect(() => {
                   <View style={styles.headerContainer}>
                       <View style={styles.headerContent}>
                           <View style={styles.userInfo}>
-                              <Image source={{ uri: loggedInUserImage }} style={styles.userImage} />
+
+                              <Image source={{ uri: loggedInUserImage || "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg" }} style={styles.userImage} />
+
                               <View>
                                   <Text style={[styles.greetingText, isDarkMode && styles.darkText]}>{greeting}</Text>
                                   <Text style={[styles.userName, isDarkMode && styles.darkText]}>{loggedInUserName}</Text>
@@ -422,11 +429,11 @@ useEffect(() => {
         </View>
     );
 };
-// Styles (نفس الـ Styles اللي عندك)
-// Styles
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
   },
   contentContainer: {
     paddingBottom: 24,
@@ -444,12 +451,19 @@ const styles = StyleSheet.create({
     top: 20,
     bottom: 20,
     paddingTop: Platform.OS === 'ios' ? 50 : 24,
+    justifyContent: "space-between", 
   },
   headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    left: 90,
+    gap: 16,
   },
   userInfo: {
     flexDirection: "row",
