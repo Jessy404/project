@@ -1,14 +1,16 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useRouter } from "expo-router";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {auth, db} from "../../config/firebaseConfig"
-import {createUserWithEmailAndPassword} from "firebase/auth";
+import {createUserWithEmailAndPassword,signInWithCredential, GoogleAuthProvider} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import {userDetailContext} from "./../../context/userDetailContext"
 import { useContext } from 'react';
 import { Alert } from "react-native";
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 export default function RegisterScreen() {
    const router = useRouter();
   const [name, setName] = useState("");
@@ -19,7 +21,13 @@ export default function RegisterScreen() {
   // const handleRegister = () => {
   //   router.replace("/(tabs)/home");
   // };
+  WebBrowser.maybeCompleteAuthSession();
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    
+    webClientId: "1042740888608-5am9h15ckoag6jrftc1q9kvmv7prjl0c.apps.googleusercontent.com",
+    redirectUri:"https://auth.expo.io/@aya21/project",
+  });
   const createNewAccount = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (resp) => {
@@ -72,7 +80,19 @@ export default function RegisterScreen() {
 
     // })
   };
-  
+  useEffect(() => {
+    if (response?.type === "success") {
+        const { id_token } = response.params;
+      const credential = GoogleAuthProvider.credential(id_token);
+      signInWithCredential(auth, credential)
+        .then(() => {
+          router.replace('/(tabs)/home');
+        })
+        .catch((error) => {
+          Alert.alert("Login error", error.message);
+        });
+    }
+  }, [response]);
   return (
     <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
        <KeyboardAvoidingView 
@@ -101,7 +121,7 @@ export default function RegisterScreen() {
         <Text style={styles.orText}>Or Sign up with</Text>
         <View style={styles.socialIcons}>
           <Ionicons name="logo-facebook" size={28} color="#3b5998" />
-          <Ionicons name="logo-google" size={28} color="#db4437" />
+            <TouchableOpacity onPress={() => promptAsync()}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => router.push("/Account/signin")}>

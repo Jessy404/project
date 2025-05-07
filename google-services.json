@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1042740888608",
+    "project_id": "medicine-reminder-8f4a5",
+    "storage_bucket": "medicine-reminder-8f4a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1042740888608:android:3592400006142019fc6845",
+        "android_client_info": {
+          "package_name": "com.aya21.project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1042740888608-dc7fef2ol3lma2q4k1ni8j1mrmg7nf55.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aya21.project",
+            "certificate_hash": "33eac7a0546ae4a9579be119a1a904de584d2c57"
+          }
+        },
+        {
+          "client_id": "1042740888608-5am9h15ckoag6jrftc1q9kvmv7prjl0c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMN9XX5hMsp3HyVQQwTlMxOUPx7TjTLZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1042740888608-5am9h15ckoag6jrftc1q9kvmv7prjl0c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
