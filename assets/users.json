@@ -1,0 +1,72 @@
+[
+    {
+        "id": 1,
+        "name": "Leanne Graham",
+        "username": "Bret",
+        "mutualFriends": 32,
+        "imageUrl": "https://placehold.co/345"
+    },
+    {
+        "id": 2,
+        "name": "Ervin Howell",
+        "username": "Antonette",
+        "mutualFriends": 18,
+        "imageUrl": "https://placehold.co/287"
+    },
+    {
+        "id": 3,
+        "name": "Clementine Bauch",
+        "username": "Samantha",
+        "mutualFriends": 51,
+        "imageUrl": "https://placehold.co/482"
+    },
+    {
+        "id": 4,
+        "name": "Patricia Lebsack",
+        "username": "Karianne",
+        "mutualFriends": 9,
+        "imageUrl": "https://placehold.co/234"
+    },
+    {
+        "id": 5,
+        "name": "Chelsey Dietrich",
+        "username": "Kamren",
+        "mutualFriends": 63,
+        "imageUrl": "https://placehold.co/512"
+    },
+    {
+        "id": 6,
+        "name": "Mrs. Dennis Schulist",
+        "username": "Leopoldo_Corkery",
+        "mutualFriends": 27,
+        "imageUrl": "https://placehold.co/456"
+    },
+    {
+        "id": 7,
+        "name": "Kurtis Weissnat",
+        "username": "Elwyn.Skiles",
+        "mutualFriends": 42,
+        "imageUrl": "https://placehold.co/398"
+    },
+    {
+        "id": 8,
+        "name": "Nicholas Runolfsdottir V",
+        "username": "Maxime_Nienow",
+        "mutualFriends": 5,
+        "imageUrl": "https://placehold.co/189"
+    },
+    {
+        "id": 9,
+        "name": "Glenna Reichert",
+        "username": "Delphine",
+        "mutualFriends": 71,
+        "imageUrl": "https://placehold.co/573"
+    },
+    {
+        "id": 10,
+        "name": "Clementina DuBuque",
+        "username": "Moriah.Stanton",
+        "mutualFriends": 12,
+        "imageUrl": "https://placehold.co/297"
+    }
+]

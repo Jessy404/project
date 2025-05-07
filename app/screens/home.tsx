@@ -15,10 +15,12 @@ import { Ionicons, MaterialCommunityIcons, FontAwesome, FontAwesome5 } from "@ex
 import { router } from "expo-router";
 import { MotiView } from "moti";
 import { Easing } from "react-native-reanimated";
+
 import { auth, db   } from '../../config/firebaseConfig'; 
 import { doc, getDoc, collection } from 'firebase/firestore'; 
 import { useContext } from 'react';
 import { userDetailContext } from "../../context/userDetailContext";
+
 
 const sampleMedicines = [
     {
@@ -215,6 +217,7 @@ const HomeScreen = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
+
     console.log("currentUser", auth.currentUser);
     console.log("Firestore:", db);
 
@@ -251,6 +254,7 @@ const HomeScreen = () => {
   });
 
   return () => unsubscribe();
+
 }, []);
 
 useEffect(() => {
@@ -277,7 +281,9 @@ useEffect(() => {
                   <View style={styles.headerContainer}>
                       <View style={styles.headerContent}>
                           <View style={styles.userInfo}>
+
                               <Image source={{ uri: loggedInUserImage || "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg" }} style={styles.userImage} />
+
                               <View>
                                   <Text style={[styles.greetingText, isDarkMode && styles.darkText]}>{greeting}</Text>
                                   <Text style={[styles.userName, isDarkMode && styles.darkText]}>{loggedInUserName}</Text>
