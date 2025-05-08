@@ -131,53 +131,57 @@ const Ai = () => {
     >
       <FlatList
        showsVerticalScrollIndicator={false}
-       contentContainerStyle={{ paddingBottom:40}}
+       contentContainerStyle={{ paddingBottom:60}}
         ListHeaderComponent={
           <View>
             <Text style={styles.title}>Miss Dose (AI Prediction )</Text>
 
-            <Text style={styles.label}>Time of Day</Text>
-            <Text style={[styles.label, { fontSize: 14 }]}>Was the device online?</Text>
-<View style={[styles.input, { height: 40 }]}>
-  <Picker
-    selectedValue={online}
-    onValueChange={setOnline}
-    style={{ color: '#062654', fontSize: 13 }}
-    itemStyle={{ fontSize: 13 }}
-    dropdownIconColor="#062654"
-  >
-    <Picker.Item label="Yes" value="1" />
-    <Picker.Item label="No" value="0" />
-  </Picker>
-</View>
+            
+      <Text style={styles.label}>Time of Day</Text>
+      <View style={[styles.input, { height: 40 }]}>
+        <Picker
+          selectedValue={time}
+          onValueChange={setTime}
+          style={{ color: '#062654', fontSize: 13 }}
+          itemStyle={{ fontSize: 13 }}
+          dropdownIconColor="#062654"
+        >
+          <Picker.Item label="Morning" value="morning" />
+          <Picker.Item label="Night" value="night" />
+        </Picker>
+      </View>
 
-<Text style={[styles.label, { fontSize: 14 }]}>Day of the Week</Text>
-<View style={[styles.input, { height: 40 }]}>
-  <Picker
-    selectedValue={day}
-    onValueChange={setDay}
-    style={{ color: '#062654', fontSize: 13 }}
-    itemStyle={{ fontSize: 13 }}
-    dropdownIconColor="#062654"
-  >
-    {Object.keys(daysMapping).map((d) => (
-      <Picker.Item key={d} label={d} value={d} />
-    ))}
-  </Picker>
-</View>
+      
+      <Text style={[styles.label, { fontSize: 14 }]}>Day of the Week</Text>
+      <View style={[styles.input, { height: 40 }]}>
+        <Picker
+          selectedValue={day}
+          onValueChange={setDay}
+          style={{ color: '#062654', fontSize: 13 }}
+          itemStyle={{ fontSize: 13 }}
+          dropdownIconColor="#062654"
+        >
+          {Object.keys(daysMapping).map((d) => (
+            <Picker.Item key={d} label={d} value={d} />
+          ))}
+        </Picker>
+      </View>
 
-<View style={[styles.input, { height: 40 }]}>
-  <Picker
-    selectedValue={time}
-    onValueChange={setTime}
-    style={{ color: '#062654', fontSize: 13 }}
-    itemStyle={{ fontSize: 13 }}
-    dropdownIconColor="#062654"
-  >
-    <Picker.Item label="Morning" value="morning" />
-    <Picker.Item label="Night" value="night" />
-  </Picker>
-</View>
+      
+      <Text style={[styles.label, { fontSize: 14 }]}>Was the device online?</Text>
+      <View style={[styles.input, { height: 40 }]}>
+        <Picker
+          selectedValue={online}
+          onValueChange={setOnline}
+          style={{ color: '#062654', fontSize: 13 }}
+          itemStyle={{ fontSize: 13 }}
+          dropdownIconColor="#062654"
+        >
+          <Picker.Item label="Yes" value="1" />
+          <Picker.Item label="No" value="0" />
+        </Picker>
+      </View>
+
 
             <Text style={styles.label}>Hours since last dose</Text>
             <TextInput
