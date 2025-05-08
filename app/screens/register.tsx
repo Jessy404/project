@@ -24,9 +24,10 @@ export default function RegisterScreen() {
   WebBrowser.maybeCompleteAuthSession();
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    
+    expoClientId: "1042740888608-5j1fklmvlev4vitrhot1bcr8nlm1h9sq.apps.googleusercontent.com",
+    androidClientId: "1042740888608-dc7fef2ol3lma2q4k1ni8j1mrmg7nf55.apps.googleusercontent.com",
     webClientId: "1042740888608-5am9h15ckoag6jrftc1q9kvmv7prjl0c.apps.googleusercontent.com",
-    redirectUri:"https://auth.expo.io/@aya21/project",
+    redirectUri: "https://auth.expo.io/@aya21/project",
   });
   const createNewAccount = () => {
     createUserWithEmailAndPassword(auth, email, password)
@@ -80,19 +81,39 @@ export default function RegisterScreen() {
 
     // })
   };
-  useEffect(() => {
-    if (response?.type === "success") {
-        const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredential(auth, credential)
-        .then(() => {
-          router.replace('/(tabs)/home');
-        })
-        .catch((error) => {
-          Alert.alert("Login error", error.message);
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await promptAsync();
+  
+      if (result.type === "success") {
+        const { id_token } = result.params;
+        const credential = GoogleAuthProvider.credential(id_token);
+  
+        const userCredential = await signInWithCredential(auth, credential);
+        const user = userCredential.user;
+  
+        // احفظ المستخدم في Firestore
+        await saveUser(user, user.displayName || "No Name");
+  
+        // حدّث context المستخدم
+        setUserDetail({
+          name: user.displayName || "No Name",
+          email: user.email,
+          phone: user.phoneNumber || "",
+          member: false,
+          uid: user.uid,
         });
+  
+        router.replace("/(tabs)/home");
+      } else {
+        console.log("Login cancelled");
+      }
+    } catch (error) {
+      console.log("Google sign-in error:", error);
+      Alert.alert("Login failed", error.message);
     }
-  }, [response]);
+  };
+  
   return (
     <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
        <KeyboardAvoidingView 
@@ -121,7 +142,7 @@ export default function RegisterScreen() {
         <Text style={styles.orText}>Or Sign up with</Text>
         <View style={styles.socialIcons}>
           <Ionicons name="logo-facebook" size={28} color="#3b5998" />
-            <TouchableOpacity onPress={() => promptAsync()}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
+          <TouchableOpacity onPress={handleGoogleSignIn}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => router.push("/Account/signin")}>
