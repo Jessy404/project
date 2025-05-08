@@ -379,13 +379,14 @@ const styles = StyleSheet.create({
         backgroundColor: "#121212",
     },
     headerContainer: {
-        padding: 24,
+        padding: 14,
         paddingBottom: 16,
         backgroundColor: "#FFFFFF",
         top: 20,
+   
         bottom: 20,
         paddingTop: Platform.OS === 'ios' ? 50 : 24,
-        justifyContent: "space-between",
+      
     },
     headerContent: {
         flexDirection: "row",
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
     headerActions: {
         flexDirection: "row",
         alignItems: "center",
-        left: 90,
+        left: 50,
         gap: 16,
     },
     userInfo: {
