@@ -4,6 +4,8 @@ import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { collection, getDocs, query, addDoc, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
+import { getAuth } from "firebase/auth";
+
 
 type Medication = {
   docID: string;
@@ -24,30 +26,42 @@ const MyMedication = () => {
   const [medications, setMedications] = useState<Medication[]>([]);
 
   useEffect(() => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+  
+    if (!currentUser) return;
+  
     const q = query(collection(db, "medication"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const medicationsData: Medication[] = [];
       querySnapshot.forEach((doc) => {
-        medicationsData.push({
-          docID: doc.id,
-          medicationName: doc.data().medicationName,
-          medicationType: doc.data().medicationType,
-          dose: doc.data().dose,
-          startDate: doc.data().startDate,
-          endDate: doc.data().endDate,
-          reminderType: doc.data().reminderType,
-          userEmail: doc.data().userEmail,
-          taken: doc.data().taken !== undefined ? doc.data().taken : false,
-          rating: doc.data().rating || 0,
-        });
+        const data = doc.data();
+        if (data.userEmail === currentUser.email) {
+          medicationsData.push({
+            docID: doc.id,
+            medicationName: data.medicationName,
+            medicationType: data.medicationType,
+            dose: data.dose,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            reminderType: data.reminderType,
+            userEmail: data.userEmail,
+            taken: data.taken !== undefined ? data.taken : false,
+            rating: data.rating || 0,
+          });
+        }
       });
       setMedications(medicationsData);
     });
+  
     return () => unsubscribe();
   }, []);
+  
+     
 
   const handleViewMedication = (docID: string) => {
-    router.push(`/screens/MedicationDetail?id=${docID}`);
+    router.push({ pathname: "/screens/MedicationDetail", params: { id: docID } });
+
 
   };
 
@@ -80,6 +94,11 @@ const MyMedication = () => {
       console.error("Error updating rating: ", error);
     }
   };
+  // const handleViewDetails = (id: string) => {
+  //   router.push(`/screens/MedicationDetail?id=${id}`);
+
+  // };
+
 
   const filteredMedications = medications.filter((item) =>
     item.medicationName.toLowerCase().includes(searchText.toLowerCase()) ||
