@@ -1,5 +1,3 @@
-// components/MedicineItem.js
-
 import React, { useEffect, useState } from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -10,6 +8,7 @@ const MedicineItem = ({ name, type, image, time, dose, schedule, status }) => {
 
   useEffect(() => {
     const now = new Date();
+    // محاولة التعامل مع الوقت بشكل صحيح
     const [medHour, medMinute] = time.replace(/[APM]/gi, '').split(':').map(Number);
     const isPM = time.includes('PM') && medHour !== 12;
     const isAM12 = time.includes('AM') && medHour === 12;
@@ -17,6 +16,12 @@ const MedicineItem = ({ name, type, image, time, dose, schedule, status }) => {
 
     const medicationTime = new Date();
     medicationTime.setHours(hour24, medMinute, 0, 0);
+
+    // التأكد من التاريخ صالح
+    if (isNaN(medicationTime.getTime())) {
+      console.error("Invalid medication time:", time);
+      return;
+    }
 
     const timeDiff = Math.abs(now.getTime() - medicationTime.getTime());
     const isWithin30Minutes = timeDiff <= 30 * 60 * 1000;
