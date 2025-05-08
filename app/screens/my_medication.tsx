@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#2265A2",
+    color: "#062654",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -251,13 +251,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   taken: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
   },
   edit: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
   },
   delete: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
   },
   btnText: {
     color: "#FFF",
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
     paddingVertical: 12,
     borderRadius: 20,
     marginBottom: 60,

@@ -17,6 +17,9 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "^1.24.0",
+    "@react-native-firebase/app": "^22.1.0",
+    "@react-native-firebase/firestore": "^22.1.0",
+    "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "expo": "~52.0.37",
@@ -38,6 +41,9 @@
     "react-dom": "18.3.1",
     "react-native": "0.76.7",
     "react-native-animatable": "^1.4.0",
+
+    "react-native-chart-kit": "^6.12.0",
+
     "react-native-gesture-handler": "~2.20.2",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-paper": "^5.13.1",
@@ -47,7 +53,8 @@
     "react-native-toast-message": "^2.2.1",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "expo-auth-session": "~6.0.3"
+
+    "tslib": "^2.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
