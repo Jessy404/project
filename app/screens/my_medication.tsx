@@ -16,6 +16,7 @@ type Medication = {
   endDate: string;
   reminderType: string;
   userEmail: string;
+  dosesPerDay: number; // Added this property
   taken?: boolean;
   rating?: number;
 };
@@ -48,6 +49,7 @@ const MyMedication = () => {
             userEmail: data.userEmail,
             taken: data.taken !== undefined ? data.taken : false,
             rating: data.rating || 0,
+            dosesPerDay:  data.dosesPerDay || 1, 
           });
         }
       });
@@ -94,11 +96,37 @@ const MyMedication = () => {
       console.error("Error updating rating: ", error);
     }
   };
-  // const handleViewDetails = (id: string) => {
-  //   router.push(`/screens/MedicationDetail?id=${id}`);
+const getNextDoseTime = (dosesPerDay: number) => {
+  const now = new Date();
 
-  // };
+  const startHour = 8; // أول جرعة الساعة 8 صباحًا
+  const endHour = 22;  // آخر جرعة الساعة 10 مساءً
+  const totalAvailableMinutes = (endHour - startHour) * 60;
 
+  // الفاصل بين كل جرعة والتانية
+  const interval = totalAvailableMinutes / (dosesPerDay - 1);
+
+  const doseTimes: Date[] = [];
+
+  for (let i = 0; i < dosesPerDay; i++) {
+    const dose = new Date(now);
+    dose.setHours(startHour, 0, 0, 0);
+    dose.setMinutes(dose.getMinutes() + i * interval);
+    doseTimes.push(dose);
+  }
+
+  // رجّع أول جرعة لسه مجتش
+  for (let dose of doseTimes) {
+    if (dose > now) {
+      return dose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  }
+
+  // لو الوقت عدّى كل الجرعات، رجّع أول جرعة لبكره
+  const firstTomorrow = new Date(doseTimes[0]);
+  firstTomorrow.setDate(firstTomorrow.getDate() + 1);
+  return firstTomorrow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
   const filteredMedications = medications.filter((item) =>
     item.medicationName.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -124,7 +152,13 @@ const MyMedication = () => {
             <FontAwesome5 name="pills" size={24} color="#2265A2" style={{ marginLeft: 10 }} />
           </View>
 
-          <View style={styles.ratingContainer}>
+ 
+<Text style={styles.details}>Dose: {item.dose}</Text>
+<Text style={styles.details}>
+  Next Dose: {getNextDoseTime(item.dosesPerDay)}
+</Text>
+
+         <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
               <TouchableOpacity key={star} onPress={() => handleRating(item.docID, star)}>
                 <FontAwesome
@@ -137,14 +171,10 @@ const MyMedication = () => {
               </TouchableOpacity>
             ))}
           </View>
-
-          <Text style={styles.details}>Dose: {item.dose}</Text>
-          <Text style={styles.details}>Time: <FontAwesome5 name="clock" /> {item.startDate} - {item.endDate}</Text>
-
           <View style={styles.buttons}>
             {!item.taken && (
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: "#2265A2" }]}
+                style={[styles.button, { backgroundColor: "#062654" }]}
                 onPress={() => handleTaken(item.docID)}
               >
                 <Text style={styles.btnText}>Taken</Text>
@@ -216,7 +246,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#2265A2",
+    color: "#062654",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -290,10 +320,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   edit: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
   },
   delete: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
   },
   btnText: {
     color: "#FFF",
@@ -304,7 +334,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
     paddingVertical: 12,
     borderRadius: 20,
     marginBottom: 60,

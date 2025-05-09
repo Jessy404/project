@@ -6,11 +6,16 @@ const NotificationModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const [medications, setMedications] = useState([
-    { id: 1, name: 'Alphatern', dose: '1.0 pill', time: 'Today at 08:00 am' },
-    { id: 2, name: 'Vitamin c', dose: '1.0 pill', time: 'Today at 08:00 am' },
-    { id: 3, name: 'Abc', dose: '2.0 pills', time: 'Today at 11:59 pm' },
-    { id: 4, name: 'Alphatern', dose: '1.0 pill', time: 'Yesterday at 08:00 am' },
-    { id: 5, name: 'Vitamin c', dose: '1.0 pill', time: '' },
+{ id: 1, name: 'Alphintern', dose: '1 tablet', time: 'Today at 08:00 am' },
+  { id: 2, name: 'Vitamin C', dose: '1 tablet (1000mg)', time: 'Today at 08:00 am' },
+  { id: 3, name: 'Panadol Extra', dose: '2 tablets (500mg)', time: 'Today at 11:59 pm' },
+  { id: 4, name: 'Alphintern', dose: '1 tablet', time: 'Yesterday at 08:00 am' },
+  { id: 5, name: 'Vitamin C', dose: '1 tablet (1000mg)', time: 'Yesterday at 10:30 am' },
+  { id: 6, name: 'Amoxicillin', dose: '1 capsule (500mg)', time: 'Today at 02:00 pm' },
+  { id: 7, name: 'Omeprazole', dose: '1 capsule (20mg)', time: 'Today at 07:00 am' },
+  { id: 8, name: 'Aspirin', dose: '1 tablet (81mg)', time: 'Yesterday at 09:00 pm' },
+  { id: 9, name: 'Cetirizine', dose: '1 tablet (10mg)', time: 'Today at 09:30 pm' },
+  { id: 10, name: 'Loratadine', dose: '1 tablet (10mg)', time: 'Yesterday at 07:15 pm' }
   ]);
 
   const markAsTaken = (id) => {
@@ -39,15 +44,13 @@ const NotificationModal = () => {
               <Ionicons name="close" size={24} color="#333" />
             </TouchableOpacity>
 
-            {/* العنوان يظهر فقط إذا القائمة غير فاضية */}
+       
             {medications.length > 0 && (
               <>
                 <Text style={styles.title}>Have you taken these?</Text>
                 <Text style={styles.subtitle}>Mark them Taken or Skipped</Text>
               </>
             )}
-
-            {/* المحتوى */}
             {medications.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="checkmark-done-circle-outline" size={48} color="#4CAF50" />
