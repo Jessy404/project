@@ -16,7 +16,7 @@ type Medication = {
   endDate: string;
   reminderType: string;
   userEmail: string;
-  frequencyPerDay: number; // Added this property
+  dosesPerDay: number; // Added this property
   taken?: boolean;
   rating?: number;
 };
@@ -49,7 +49,7 @@ const MyMedication = () => {
             userEmail: data.userEmail,
             taken: data.taken !== undefined ? data.taken : false,
             rating: data.rating || 0,
-            frequencyPerDay: 0
+            dosesPerDay:  data.dosesPerDay || 1, 
           });
         }
       });
@@ -96,26 +96,38 @@ const MyMedication = () => {
       console.error("Error updating rating: ", error);
     }
   };
-const getNextDoseTime = (frequencyPerDay: number) => {
+const getNextDoseTime = (dosesPerDay: number) => {
   const now = new Date();
 
-  // ضبط أول جرعة على اليوم الحالي الساعة 8:00 صباحًا
-  const firstDose = new Date(now);
-  firstDose.setHours(8, 0, 0, 0); // 8:00 صباحًا
+  const startHour = 8; // أول جرعة الساعة 8 صباحًا
+  const endHour = 22;  // آخر جرعة الساعة 10 مساءً
+  const totalAvailableMinutes = (endHour - startHour) * 60;
 
-  const intervalInMinutes = (24 * 60) / frequencyPerDay;
+  // الفاصل بين كل جرعة والتانية
+  const interval = totalAvailableMinutes / (dosesPerDay - 1);
 
-  for (let i = 0; i < frequencyPerDay; i++) {
-    const doseTime = new Date(firstDose.getTime() + i * intervalInMinutes * 60000);
-    if (doseTime > now) {
-      return doseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const doseTimes: Date[] = [];
+
+  for (let i = 0; i < dosesPerDay; i++) {
+    const dose = new Date(now);
+    dose.setHours(startHour, 0, 0, 0);
+    dose.setMinutes(dose.getMinutes() + i * interval);
+    doseTimes.push(dose);
+  }
+
+  // رجّع أول جرعة لسه مجتش
+  for (let dose of doseTimes) {
+    if (dose > now) {
+      return dose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
   }
 
-  // إذا مرّ اليوم، نعرض أول جرعة لليوم التالي
-  const nextDayDose = new Date(firstDose.getTime() + 24 * 60 * 60000);
-  return nextDayDose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // لو الوقت عدّى كل الجرعات، رجّع أول جرعة لبكره
+  const firstTomorrow = new Date(doseTimes[0]);
+  firstTomorrow.setDate(firstTomorrow.getDate() + 1);
+  return firstTomorrow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
+
   const filteredMedications = medications.filter((item) =>
     item.medicationName.toLowerCase().includes(searchText.toLowerCase()) ||
     item.medicationType.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -143,7 +155,7 @@ const getNextDoseTime = (frequencyPerDay: number) => {
  
 <Text style={styles.details}>Dose: {item.dose}</Text>
 <Text style={styles.details}>
-  Next Dose: {getNextDoseTime(item.frequencyPerDay)}
+  Next Dose: {getNextDoseTime(item.dosesPerDay)}
 </Text>
 
          <View style={styles.ratingContainer}>
