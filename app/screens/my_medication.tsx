@@ -1,55 +1,108 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from "react-native";
 import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { collection, getDocs, query, addDoc, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { db } from "../../config/firebaseConfig";
+import { getAuth } from "firebase/auth";
+
 
 type Medication = {
-  id: string;
-  name: string;
-  type: string;
-  time: string;
+  docID: string;
+  medicationName: string;
+  medicationType: string;
   dose: string;
-  expiry: string;
-  taken: boolean;
-  rating: number;
+  startDate: string;
+  endDate: string;
+  reminderType: string;
+  userEmail: string;
+  taken?: boolean;
+  rating?: number;
 };
 
 const MyMedication = () => {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
-  const [medications, setMedications] = useState<Medication[]>([
-    { id: "1", name: "Paracetamol", type: "Tablet", time: "08:00 AM", dose: "500mg", expiry: "12/2025", taken: false, rating: 0 },
-    { id: "2", name: "Vitamin C", type: "Syrup", time: "12:00 PM", dose: "1000mg", expiry: "06/2024", taken: false, rating: 0 },
-    { id: "3", name: "Ibuprofen", type: "Injection", time: "06:00 PM", dose: "400mg", expiry: "09/2026", taken: false, rating: 0 },
-  ]);
+  const [medications, setMedications] = useState<Medication[]>([]);
 
-  const handleTaken = (id: string) => {
-    setMedications((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, taken: true } : item))
-    );
+  useEffect(() => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+  
+    if (!currentUser) return;
+  
+    const q = query(collection(db, "medication"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const medicationsData: Medication[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.userEmail === currentUser.email) {
+          medicationsData.push({
+            docID: doc.id,
+            medicationName: data.medicationName,
+            medicationType: data.medicationType,
+            dose: data.dose,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            reminderType: data.reminderType,
+            userEmail: data.userEmail,
+            taken: data.taken !== undefined ? data.taken : false,
+            rating: data.rating || 0,
+          });
+        }
+      });
+      setMedications(medicationsData);
+    });
+  
+    return () => unsubscribe();
+  }, []);
+  
+     
+
+  const handleViewMedication = (docID: string) => {
+    router.push({ pathname: "/screens/MedicationDetail", params: { id: docID } });
+
+
   };
 
-  const handleDelete = (id: string) => {
-    setMedications((prev) => prev.filter((item) => item.id !== id));
+  const handleDelete = async (docID: string) => {
+    try {
+      await deleteDoc(doc(db, "medication", docID));
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+    }
   };
 
-  const handleRating = (id: string, rating: number) => {
-    setMedications((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, rating } : item))
-    );
+  const handleTaken = async (docID: string) => {
+    try {
+      const docRef = doc(db, "medication", docID);
+      await updateDoc(docRef, {
+        taken: true,
+      });
+    } catch (error) {
+      console.error("Error updating document: ", error);
+    }
   };
 
-  const handleViewDetails = (id: string) => {
-    router.push(`/screens/MedicationDetail?id=${id}`);
+  const handleRating = async (docID: string, rating: number) => {
+    try {
+      const docRef = doc(db, "medication", docID);
+      await updateDoc(docRef, {
+        rating,
+      });
+    } catch (error) {
+      console.error("Error updating rating: ", error);
+    }
   };
+  // const handleViewDetails = (id: string) => {
+  //   router.push(`/screens/MedicationDetail?id=${id}`);
 
-  const handleAddMedication = () => {
-    router.push("/screens/AddNewMedication");
-  };
+  // };
+
 
   const filteredMedications = medications.filter((item) =>
-    item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchText.toLowerCase()) ||
+    item.medicationName.toLowerCase().includes(searchText.toLowerCase()) ||
+    item.medicationType.toLowerCase().includes(searchText.toLowerCase()) ||
     item.dose.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -58,40 +111,60 @@ const MyMedication = () => {
 
     return (
       <View style={styles.card}>
-        <View style={styles.header}>
-          <Text style={styles.medName}>{item.name} ({item.type})</Text>
+        <View style={styles.cardContent}>
+          <View style={styles.header}>
+            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+              <Text style={styles.medName}>
+                {item.medicationName} <Text style={styles.medType}>({item.medicationType})</Text>
+              </Text>
+            </View>
+            {item.taken && (
+              <FontAwesome name="check-circle" size={22} color="#4CAF50" style={{ marginLeft: 10 }} />
+            )}
+            <FontAwesome5 name="pills" size={24} color="#2265A2" style={{ marginLeft: 10 }} />
+          </View>
+
           <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => handleRating(item.id, star)}>
+              <TouchableOpacity key={star} onPress={() => handleRating(item.docID, star)}>
                 <FontAwesome
-                  name={item.rating >= star ? "star" : "star-o"}
-                  size={20}
-                  color={item.rating >= star ? "#FFD700" : "#CCC"}
+                 name={(item.rating ?? 0) >= star ? "star" : "star-o"}
+
+                  size={18}
+                  color={(item.rating ?? 0) >= star ? "#FFD700" : "#CCC"}
+
                 />
               </TouchableOpacity>
             ))}
           </View>
-          {item.taken ? (
-            <FontAwesome5 name="check-double" size={20} color="green" style={styles.icon} />
-          ) : (
-            <FontAwesome5 name="pills" size={20} color="#2265A2" style={styles.icon} />
-          )}
-        </View>
-        <Text style={styles.details}>Time : <FontAwesome5 name="clock" /> {item.time}</Text>
-        <Text style={styles.details}>Dose : <FontAwesome5 name="capsules" /> {item.dose}</Text>
 
-        <View style={styles.buttons}>
-          {!item.taken && (
-            <TouchableOpacity style={[styles.button, styles.taken]} onPress={() => handleTaken(item.id)}>
-              <Text style={styles.btnText}>Taken</Text>
+          <Text style={styles.details}>Dose: {item.dose}</Text>
+          <Text style={styles.details}>Time: <FontAwesome5 name="clock" /> {item.startDate} - {item.endDate}</Text>
+
+          <View style={styles.buttons}>
+            {!item.taken && (
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#2265A2" }]}
+                onPress={() => handleTaken(item.docID)}
+              >
+                <Text style={styles.btnText}>Taken</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[styles.button, styles.edit]}
+              onPress={() => handleViewMedication(item.docID)}
+            >
+              <Text style={styles.btnText}>View</Text>
             </TouchableOpacity>
-          )}
-          <TouchableOpacity style={[styles.button, styles.edit]} onPress={() => handleViewDetails(item.id)}>
-            <Text style={styles.btnText}>View</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.delete]} onPress={() => handleDelete(item.id)}>
-            <Text style={styles.btnText}>Delete</Text>
-          </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.delete]}
+              onPress={() => handleDelete(item.docID)}
+            >
+              <Text style={styles.btnText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -99,8 +172,6 @@ const MyMedication = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topHalfCircle}></View>
-
       <View style={styles.headerContainer}>
         <Text style={styles.title}>My Medication</Text>
         <View style={styles.searchContainer}>
@@ -114,23 +185,20 @@ const MyMedication = () => {
           />
         </View>
       </View>
-
       {filteredMedications.length === 0 ? (
         <Text style={{ textAlign: 'center', color: '#888', marginTop: 20 }}>No medications found.</Text>
       ) : (
         <FlatList
           data={filteredMedications}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.docID}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={
-            <TouchableOpacity style={styles.addButton} onPress={handleAddMedication}>
-              <FontAwesome5 name="plus" size={20} color="#FFF" />
-              <Text style={styles.addButtonText}>Add Medication</Text>
-            </TouchableOpacity>
-          }
         />
       )}
+
+      <TouchableOpacity style={styles.addButton} onPress={() => router.push("/screens/AddNewMedication")}>
+        <Text style={styles.addButtonText}>Add New Medication</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -141,16 +209,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     padding: 20,
   },
-  topHalfCircle: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "40%",
-    backgroundColor: "#2265A2",
-    borderBottomLeftRadius: 100,
-    borderBottomRightRadius: 100,
-  },
   headerContainer: {
     marginTop: 40,
     marginBottom: 20,
@@ -158,7 +216,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#FFF",
+    color: "#2265A2",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -180,8 +238,8 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   card: {
-    backgroundColor: "#EAF0F7",
-    padding: 15,
+    backgroundColor: "#FFF",
+    padding: 10,
     borderRadius: 20,
     marginBottom: 15,
     shadowColor: "#000",
@@ -190,34 +248,39 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
+  cardContent: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    marginBottom: 10,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 5,
+    marginBottom: 10,
   },
   medName: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#2265A2",
+    marginRight: 10,
+  },
+  medType: {
+    fontSize: 18,
+    color: "#555",
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    marginTop: 10,
   },
   details: {
     fontSize: 14,
     color: "#555",
     marginBottom: 5,
   },
-  icon: {
-    marginLeft: 10,
-  },
   buttons: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 5,
   },
   button: {
     flex: 1,
@@ -226,14 +289,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 5,
   },
-  taken: {
+  edit: {
     backgroundColor: "#2265A2",
   },
-  edit: {
-    backgroundColor: "#7FADE0",
-  },
   delete: {
-    backgroundColor: "#E63946",
+    backgroundColor: "#2265A2",
   },
   btnText: {
     color: "#FFF",
@@ -254,7 +314,6 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 16,
     fontWeight: "bold",
-    marginLeft: 8,
   },
 });
 
