@@ -1,18 +1,58 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { db } from "../../config/firebaseConfig";
+import { getAuth } from "firebase/auth";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 const MyInfo = () => {
   const router = useRouter();
+  const auth = getAuth();
+  const user = auth.currentUser;
 
-  const [name, setName] = useState('Soso');
-  const [email, setEmail] = useState('soso@example.com');
-  const [age, setAge] = useState('22');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [age, setAge] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
-    console.log('Saved:', { name, email, age });
-    router.back(); 
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user) {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setName(data.name || "");
+          setEmail(data.email || "");
+          setAge(data.age || "");
+        }
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleSave = async () => {
+    if (user) {
+      const docRef = doc(db, 'users', user.uid);
+      await updateDoc(docRef, {
+        name,
+        email,
+        age,
+      });
+      console.log('Saved:', { name, email, age });
+      router.back(); 
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -57,6 +97,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2265A2',
     padding: 20,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2265A2',
   },
   title: {
     fontSize: 24,
