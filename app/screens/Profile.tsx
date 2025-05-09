@@ -22,6 +22,10 @@ export default function Profile() {
       <TouchableOpacity style={styles.card} onPress={() => router.push('/screens/my_medication')}>
         <Text style={styles.cardText}>My Medications</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.card} onPress={() => router.push('/screens/challenge')}>
+        <Text style={styles.cardText}>My Challenges</Text>
+      </TouchableOpacity>
   
     </View>
   );
