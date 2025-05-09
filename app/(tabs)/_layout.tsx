@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Image, Text } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { HapticTab } from '@/components/HapticTab';
-import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons, MaterialIcons,Foundation, FontAwesome5 } from '@expo/vector-icons';
 
 export default function TabLayout() {
   return (
@@ -67,7 +67,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="challenge"
         options={{
-          tabBarLabel: "challenge",
+          tabBarLabel: "Challenge",
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <MaterialCommunityIcons
@@ -75,6 +75,35 @@ export default function TabLayout() {
                 color={color}
                 size={focused ? 32 : 25}
               />
+              
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ai"
+        options={{
+          tabBarLabel: "AI",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              {/* حاوية الأيقونتين فوق بعض */}
+              <View>
+                <FontAwesome5
+                  name="capsules"
+                  size={focused ? 28 : 22}
+                  color={color}
+                />
+                <FontAwesome5
+                  name="minus-circle"
+                  size={12}
+                  color={focused ? color : 'transparent'}
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -8,
+                  }}
+                />
+              </View>
             </View>
           ),
         }}

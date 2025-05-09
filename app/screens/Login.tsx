@@ -7,14 +7,18 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { auth, db } from "../../config/firebaseConfig"
-import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth"
+import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, sendPasswordResetEmail, signInWithCredential, GoogleAuthProvider } from "firebase/auth"
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { userDetailContext } from "./../../context/userDetailContext"
 import { useContext } from 'react';
 import { ActivityIndicator } from "react-native-paper";
 import { Alert } from 'react-native';
+import * as AuthSession from "expo-auth-session";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 export default function LoginScreen() {
+
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -22,6 +26,17 @@ export default function LoginScreen() {
     const [initializing, setInitializing] = useState(true);
     const { userDetail, setUserDetail } = useContext(userDetailContext);
     const [loading, setLoading] = useState(false);
+    WebBrowser.maybeCompleteAuthSession();
+
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        clientId: "1042740888608-5j1fklmvlev4vitrhot1bcr8nlm1h9sq.apps.googleusercontent.com",
+        androidClientId: "1042740888608-dc7fef2ol3lma2q4k1ni8j1mrmg7nf55.apps.googleusercontent.com",
+        webClientId: "1042740888608-5am9h15ckoag6jrftc1q9kvmv7prjl0c.apps.googleusercontent.com",
+        redirectUri: "https://auth.expo.io/@aya21/project",
+    });
+
+
+
     useEffect(() => {
         const loadRememberedCredentials = async () => {
             try {
@@ -44,23 +59,31 @@ export default function LoginScreen() {
         loadRememberedCredentials();
     }, []);
 
+    useEffect(() => {
+        if (response?.type === "success") {
+            const { id_token } = response.params;
+            const credential = GoogleAuthProvider.credential(id_token);
+
+
+            signInWithCredential(auth, credential)
+                .then(() => {
+                    router.push('/(tabs)/home');
+                })
+                .catch((error) => {
+                    Alert.alert("Login error", error.message);
+                });
+        }
+    }, [response]);
+
     const onSignInClick = async () => {
         setLoading(true);
 
         try {
-            // Set persistence based on Remember Me selection
-            await setPersistence(
-                auth,
-                rememberMe ? browserLocalPersistence : browserSessionPersistence
-            );
-
-            // Save credentials if Remember Me is checked
             if (rememberMe) {
                 await AsyncStorage.setItem('rememberedEmail', email);
                 await AsyncStorage.setItem('rememberedPassword', password);
                 await AsyncStorage.setItem('rememberMe', 'true');
             } else {
-                // Clear saved credentials if Remember Me is unchecked
                 await AsyncStorage.removeItem('rememberedEmail');
                 await AsyncStorage.removeItem('rememberedPassword');
                 await AsyncStorage.removeItem('rememberMe');
@@ -85,6 +108,7 @@ export default function LoginScreen() {
         }
     };
 
+
     const getUserDetail = async () => {
         const result = await getDoc(doc(db, "users", email));
         if (result.exists()) {
@@ -94,6 +118,22 @@ export default function LoginScreen() {
             console.log("No such document!");
         }
     };
+    const handlePasswordReset = async () => {
+        if (!email) {
+            Alert.alert("Please enter your email to reset password.");
+            return;
+
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            Alert.alert("Check your email to reset your password.");
+        }
+        catch (error) {
+            console.log(error);
+            Alert.alert("Error", "Failed to send reset email. Please check your email and try again.");
+
+        }
+    };
 
     if (initializing) {
         return (
@@ -101,6 +141,7 @@ export default function LoginScreen() {
                 <ActivityIndicator size="large" color="#062654" />
             </View>
         );
+        
     }
 
     return (
@@ -145,7 +186,7 @@ export default function LoginScreen() {
                         />
                         <Text style={styles.rememberText}>Remember me</Text>
                     </View>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={handlePasswordReset}>
                         <Text style={styles.forgotText}>Forgot password?</Text>
                     </TouchableOpacity>
                 </View>
@@ -165,7 +206,7 @@ export default function LoginScreen() {
                 <Text style={styles.orText}>Or sign in with</Text>
                 <View style={styles.socialIcons}>
                     <Ionicons name="logo-facebook" size={28} color="#3b5998" />
-                    <Ionicons name="logo-google" size={28} color="#db4437" />
+                    <TouchableOpacity onPress={() => promptAsync()}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity onPress={() => router.replace("../Account/register")}>
