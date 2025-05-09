@@ -4,13 +4,11 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, K
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {auth, db} from "../../config/firebaseConfig"
-import {createUserWithEmailAndPassword, browserSessionPersistence , sendPasswordResetEmail,signInWithCredential, GoogleAuthProvider} from "firebase/auth";
+import {createUserWithEmailAndPassword,signInWithCredential, GoogleAuthProvider} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import {userDetailContext} from "./../../context/userDetailContext"
 import { useContext } from 'react';
 import { Alert } from "react-native";
-import * as AuthSession from "expo-auth-session";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 export default function RegisterScreen() {
@@ -20,11 +18,17 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const {userDetail ,setUserDetail} =useContext(userDetailContext);
-  // const handleRegister = () => {
+
   //   router.replace("/(tabs)/home");
   // };
-    WebBrowser.maybeCompleteAuthSession();
+  WebBrowser.maybeCompleteAuthSession();
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+clientId: "1042740888608-5j1fklmvlev4vitrhot1bcr8nlm1h9sq.apps.googleusercontent.com",
+    androidClientId: "1042740888608-dc7fef2ol3lma2q4k1ni8j1mrmg7nf55.apps.googleusercontent.com",
+    webClientId: "1042740888608-5am9h15ckoag6jrftc1q9kvmv7prjl0c.apps.googleusercontent.com",
+    redirectUri: "https://auth.expo.io/@aya21/project",
+  });
   const createNewAccount = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (resp) => {
@@ -41,6 +45,7 @@ export default function RegisterScreen() {
       });
   };
   
+
   const [request, response, promptAsync] = Google.useAuthRequest({
           clientId: "1042740888608-5j1fklmvlev4vitrhot1bcr8nlm1h9sq.apps.googleusercontent.com",
           androidClientId: "1042740888608-dc7fef2ol3lma2q4k1ni8j1mrmg7nf55.apps.googleusercontent.com",
@@ -48,7 +53,7 @@ export default function RegisterScreen() {
           redirectUri: "https://auth.expo.io/@aya21/project",
       });
       
-  // const saveUser = async (user: /unresolved/ any ) => {
+
   //   await setDoc(doc(db, "users", user.uid), {
   //     name: user.fullName,
   //     email: user.email,
@@ -56,7 +61,7 @@ export default function RegisterScreen() {
   //     uid: user.uid
   //   });
   // };
-  const saveUser = async (user:  any, fullName: string) => {
+  const saveUser = async (user: /*unresolved*/ any, fullName: string) => {
 
     try {
       console.log("Saving user to Firestore:", {
@@ -83,28 +88,50 @@ export default function RegisterScreen() {
 
     // })
   };
-   useEffect(() => {
-          if (response?.type === "success") {
-              const { id_token } = response.params;
-            const credential = GoogleAuthProvider.credential(id_token);
-           
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await promptAsync();
   
-            signInWithCredential(auth, credential)
-              .then(() => {
-                router.push('/(tabs)/home');
-              })
-              .catch((error) => {
-                Alert.alert("Login error", error.message);
-              });
-          }
-        }, [response]);
+      if (result.type === "success") {
+        const { id_token } = result.params;
+        const credential = GoogleAuthProvider.credential(id_token);
+  
+        const userCredential = await signInWithCredential(auth, credential);
+        const user = userCredential.user;
+  
+        // احفظ المستخدم في Firestore
+        await saveUser(user, user.displayName || "No Name");
+  
+        // حدّث context المستخدم
+        setUserDetail({
+          name: user.displayName || "No Name",
+          email: user.email,
+          phone: user.phoneNumber || "",
+          member: false,
+          uid: user.uid,
+        });
+  
+        router.replace("/(tabs)/home");
+      } else {
+        console.log("Login cancelled");
+      }
+    } catch (error) {
+      console.log("Google sign-in error:", error);
+      if (error instanceof Error) {
+        Alert.alert("Login failed", error.message);
+      } else {
+        Alert.alert("Login failed", "An unknown error occurred.");
+      }
+    }
+  };
+  
   return (
     <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
        <KeyboardAvoidingView 
               behavior={Platform.OS === "ios" ? "padding" : "height"} 
               style={styles.container}
             >
-     
+    
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
       <Ionicons name="arrow-back" size={24} color="white" />
 </TouchableOpacity>
@@ -126,7 +153,7 @@ export default function RegisterScreen() {
         <Text style={styles.orText}>Or Sign up with</Text>
         <View style={styles.socialIcons}>
           <Ionicons name="logo-facebook" size={28} color="#3b5998" />
-           <TouchableOpacity onPress={() => promptAsync()}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
+          <TouchableOpacity onPress={handleGoogleSignIn}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => router.push("/Account/signin")}>
@@ -222,6 +249,6 @@ const styles = StyleSheet.create({
   },
   signinText: {
     color: "#777",
-    marginTop: 15,
-  },
+    marginTop: 15,
+  },
 });
