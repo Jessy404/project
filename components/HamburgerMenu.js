@@ -1,32 +1,74 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Modal, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db, auth } from '../config/firebaseConfig'; // Make sure the path is correct.
 const NotificationModal = () => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [medications, setMedications] = useState([]);
+  const [loading, setLoading] = useState(false);
+const fetchMedications = async () => {
+  try {
+    setLoading(true);
+    const user = auth.currentUser;
+    
+    if (!user) {
+      console.error("❌ No user logged in!");
+      return;
+    }
 
-  const [medications, setMedications] = useState([
-    { id: 1, name: 'Alphatern', dose: '1.0 pill', time: 'Today at 08:00 am' },
-    { id: 2, name: 'Vitamin c', dose: '1.0 pill', time: 'Today at 08:00 am' },
-    { id: 3, name: 'Abc', dose: '2.0 pills', time: 'Today at 11:59 pm' },
-    { id: 4, name: 'Alphatern', dose: '1.0 pill', time: 'Yesterday at 08:00 am' },
-    { id: 5, name: 'Vitamin c', dose: '1.0 pill', time: '' },
-  ]);
+    console.log("✅ Logged-in user:", user.email);
+
+    const medsRef = collection(db, 'medication'); // ✅ Make sure of the group name.
+    const q = query(medsRef, where('userEmail', '==', user.email));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      console.warn("⚠️ No medications found for this user!");
+    }
+
+    const fetched = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.medicationName, // ✅ Using the correct field
+        dose: `${data.dose} ${data.medicationType}`, // ✅ Show the dose with the type
+        time: data.whenToTake || 'No time specified',
+      };
+    });
+
+    console.log("📦 Fetched medications:", fetched);
+
+    setMedications(fetched);
+  } catch (error) {
+    console.error('🔥 Error fetching meds:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const markAsTaken = (id) => {
-    setMedications(prev => prev.filter(item => item.id !== id));
+    setMedications((prev) => prev.filter((med) => med.id !== id));
   };
 
   const markAsSkipped = (id) => {
-    setMedications(prev => prev.filter(item => item.id !== id));
+    setMedications((prev) => prev.filter((med) => med.id !== id));
   };
 
   const markAllAsTaken = () => {
     setMedications([]);
   };
 
+  useEffect(() => {
+    if (modalVisible) {
+      fetchMedications();
+    }
+  }, [modalVisible]);
+
   return (
-    <View style={{ flex: 1 }}>
+    <View>
       <TouchableOpacity onPress={() => setModalVisible(true)}>
         <Text style={{ fontSize: 24 }}>🔔</Text>
       </TouchableOpacity>
@@ -34,33 +76,23 @@ const NotificationModal = () => {
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.overlay}>
           <View style={styles.modalContainer}>
-            {/* زر الإغلاق */}
             <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="#333" />
             </TouchableOpacity>
 
-            {/* العنوان يظهر فقط إذا القائمة غير فاضية */}
-            {medications.length > 0 && (
+            {loading ? (
+              <ActivityIndicator size="large" color="#062654" style={{ marginTop: 40 }} />
+            ) : medications.length > 0 ? (
               <>
                 <Text style={styles.title}>Have you taken these?</Text>
                 <Text style={styles.subtitle}>Mark them Taken or Skipped</Text>
-              </>
-            )}
 
-            {/* المحتوى */}
-            {medications.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="checkmark-done-circle-outline" size={48} color="#4CAF50" />
-                <Text style={styles.emptyText}>All medications taken 🎉</Text>
-              </View>
-            ) : (
-              <>
                 <ScrollView style={styles.scrollView}>
                   {medications.map((med) => (
                     <View key={med.id} style={styles.card}>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.medicationName}>{med.name} • {med.dose}</Text>
-                        {med.time ? <Text style={styles.medicationTime}>{med.time}</Text> : null}
+                        <Text style={styles.medicationTime}>{med.time}</Text>
                       </View>
                       <View style={styles.actions}>
                         <TouchableOpacity style={styles.circleButton} onPress={() => markAsSkipped(med.id)}>
@@ -76,7 +108,6 @@ const NotificationModal = () => {
                   ))}
                 </ScrollView>
 
-                {/* زر "Taken all" يظهر فقط لما في عناصر */}
                 <TouchableOpacity style={styles.takeAllButton} onPress={markAllAsTaken}>
                   <Text style={styles.takeAllText}>✓ Taken all</Text>
                 </TouchableOpacity>
@@ -85,6 +116,11 @@ const NotificationModal = () => {
                   <Text style={styles.skipAllText}>Skipped all</Text>
                 </TouchableOpacity>
               </>
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons name="checkmark-done-circle-outline" size={48} color="#4CAF50" />
+                <Text style={styles.emptyText}>All medications taken 🎉</Text>
+              </View>
             )}
           </View>
         </View>
@@ -94,7 +130,8 @@ const NotificationModal = () => {
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+//The same styles you have exactly.  
+ overlay: {
     flex: 1,
     backgroundColor: '#00000088',
     justifyContent: 'center',

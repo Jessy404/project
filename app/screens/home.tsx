@@ -16,11 +16,10 @@ import { router } from "expo-router";
 import { MotiView } from "moti";
 import { Easing } from "react-native-reanimated";
 
-import { auth, db   } from '../../config/firebaseConfig'; 
-import { doc, getDoc, collection } from 'firebase/firestore'; 
+import { auth, db } from '../../config/firebaseConfig'; 
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore'; 
 import { useContext } from 'react';
 import { userDetailContext } from "../../context/userDetailContext";
-
 
 const sampleMedicines = [
     {
@@ -69,142 +68,136 @@ const challenges = [
     { id: "3", title: "Nutrition", icon: "food-apple", progress: 90, color: "#F5A623" },
 ];
 
-// Components (خليهم زي ما هما)
+
 interface CalendarProps {
-    onSelectDate: (date: number) => void;
-    selected: number;
+  onSelectDate: (date: number) => void;
+  selected: number;
 }
 
 const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
-
   const days = Array.from({ length: 31 }, (_, i) =>
-    [ "THU", "FRI", "SAT","SUN", "MON", "TUE", "WED"][i % 7]
+      ["THU", "FRI", "SAT", "SUN", "MON", "TUE", "WED"][i % 7]
   );
   const dates = Array.from({ length: 31 }, (_, i) => i + 1);
- 
 
   return (
-    <FlatList
-      horizontal
-      data={dates}
-      keyExtractor={(item) => item.toString()}
-      renderItem={({ item: date, index }) => (
-        <TouchableOpacity
-          style={[styles.dayContainer, selected === date && styles.selectedDay]}
-          onPress={() => onSelectDate(date)}
-        >
-          <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>
-            {days[index % 7]}
-          </Text>
-          <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
-            <Text style={[styles.dateText, selected === date && styles.selectedDateText]}>
-              {date}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.calendarContainer}
-    />
+      <FlatList
+          horizontal
+          data={dates}
+          keyExtractor={(item) => item.toString()}
+          renderItem={({ item: date, index }) => (
+              <TouchableOpacity
+                  style={[styles.dayContainer, selected === date && styles.selectedDay]}
+                  onPress={() => onSelectDate(date)}
+              >
+                  <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>
+                      {days[index % 7]}
+                  </Text>
+                  <View style={[styles.dateCircle, selected === date && styles.selectedDate]}>
+                      <Text style={[styles.dateText, selected === date && styles.selectedDateText]}>
+                          {date}
+                      </Text>
+                  </View>
+              </TouchableOpacity>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.calendarContainer}
+      />
   );
-
 };
 
 interface MedicineItemProps {
-    item: typeof sampleMedicines[0];
+  item: typeof sampleMedicines[0];
 }
 
 const MedicineItem: React.FC<MedicineItemProps> = ({ item }) => {
-    const { name, type, time, dose, schedule, status, image } = item;
+  const { name, type, time, dose, schedule, status, image } = item;
 
-    const [isTimeForMedication, setIsTimeForMedication] = useState(false);
+  const [isTimeForMedication, setIsTimeForMedication] = useState(false);
 
-    useEffect(() => {
-        const now = new Date();
-        const [medHour, medMinute] = time.replace(/[APM]/g, '').split(':').map(Number);
-        const isPM = time.includes('PM') && medHour !== 12;
-        const hour24 = isPM ? medHour + 12 : medHour;
+  useEffect(() => {
+      if (!time) {
+          console.error(`❌ خطأ: لا يوجد وقت محدد للدواء ${name}`);
+          return;
+      }
 
-        const medicationTime = new Date();
-        medicationTime.setHours(hour24, medMinute, 0, 0);
+      const now = new Date();
+      const [medHour, medMinute] = time.replace(/[APM]/g, '').split(':').map(Number);
+      const isPM = time.includes('PM') && medHour !== 12;
+      const hour24 = isPM ? medHour + 12 : medHour;
 
-        const timeDiff = Math.abs(now.getTime() - medicationTime.getTime());
-        const isWithin30Minutes = timeDiff <= 30 * 60 * 1000;
+      const medicationTime = new Date();
+      medicationTime.setHours(hour24, medMinute, 0, 0);
 
-        setIsTimeForMedication(isWithin30Minutes);
+      const timeDiff = Math.abs(now.getTime() - medicationTime.getTime());
+      const isWithin30Minutes = timeDiff <= 30 * 60 * 1000;
 
-        if (isWithin30Minutes && status !== 'done') {
+      setIsTimeForMedication(isWithin30Minutes);
+
+      if (isWithin30Minutes && status !== 'done') {
           console.log(`Time to take ${name}!`);
+      }
+  }, [time, status, name]);
 
-        }
-    }, [time, status, name]);
+  return (
+      <View style={styles.medicineItemContainer}>
+          <Image source={{ uri: image }} style={styles.medicineImage} resizeMode="contain" />
+          <View style={styles.medicineDetails}>
+              <View style={styles.medicineHeader}>
+                  <Text style={styles.medicineName}>{name} ({type})</Text>
+                  {status === "done" ? (
+                      <MaterialCommunityIcons name="check-circle" size={24} color="#34A853" />
+                  ) : (
+                      <MaterialCommunityIcons
+                          name={isTimeForMedication ? "bell-ring" : "alert-circle"}
+                          size={24}
+                          color={isTimeForMedication ? "#FFA000" : "#062654"}
+                      />
+                  )}
+              </View>
 
-    return (
-        <View style={styles.medicineItemContainer}>
-            <Image source={{ uri: image }} style={styles.medicineImage} resizeMode="contain" />
-            <View style={styles.medicineDetails}>
-                <View style={styles.medicineHeader}>
-                    <Text style={styles.medicineName}>{name} ({type})</Text>
-                    {status === "done" ? (
-                        <MaterialCommunityIcons name="check-circle" size={24} color="#34A853" />
-                    ) : (
-                        <MaterialCommunityIcons
-                            name={isTimeForMedication ? "bell-ring" : "alert-circle"}
-                            size={24}
-                            color={isTimeForMedication ? "#FFA000" : "#062654"}
-                        />
-                    )}
-                </View>
+              {time ? (
+                  <View style={styles.medicineInfoRow}>
+                      <MaterialCommunityIcons name="clock-outline" size={18} color="#ffffff" />
+                      <Text style={styles.medicineInfoText}>{time}</Text>
+                  </View>
+              ) : (
+                  <Text style={styles.errorText}>❌ لا يوجد وقت محدد لهذا الدواء</Text>
+              )}
 
-                <View style={styles.medicineInfoRow}>
-                    <MaterialCommunityIcons name="clock-outline" size={18} color="#ffffff" />
-                    <Text style={styles.medicineInfoText}>{time}</Text>
-                </View>
+              <View style={styles.medicineInfoRow}>
+                  <MaterialCommunityIcons name="pill" size={18} color="#ffffff" />
+                  <Text style={styles.medicineInfoText}>{dose}</Text>
+              </View>
 
-                <View style={styles.medicineInfoRow}>
-                    <MaterialCommunityIcons name="pill" size={18} color="#ffffff" />
-                    <Text style={styles.medicineInfoText}>{dose}</Text>
-                </View>
-
-                <View style={styles.medicineInfoRow}>
-                    <MaterialCommunityIcons name="calendar-clock" size={18} color="#ffffff" />
-                    <Text style={styles.medicineInfoText}>{schedule}</Text>
-                </View>
-
-                <View style={styles.ratingContainer}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <FontAwesome
-                            key={star}
-                            name={star <= 3 ? "star" : "star-o"}
-                            size={16}
-                            color="#FFD700"
-                        />
-                    ))}
-                </View>
-            </View>
-        </View>
-    );
+              <View style={styles.medicineInfoRow}>
+                  <MaterialCommunityIcons name="calendar-clock" size={18} color="#ffffff" />
+                  <Text style={styles.medicineInfoText}>{schedule}</Text>
+              </View>
+          </View>
+      </View>
+  );
 };
 
+
+
 interface ChallengeItemProps {
-    item: typeof challenges[0];
+  item: typeof challenges[0];
 }
 
 const ChallengeItem: React.FC<ChallengeItemProps> = ({ item }) => (
-    <View style={styles.challengeContainer}>
-        <View style={[styles.challengeIconContainer, { backgroundColor: `${item.color}20` }]}>
-
-            <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />
-        </View>
-        <Text style={styles.challengeTitle}>{item.title}</Text>
-        <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${item.progress}%`, backgroundColor: item.color }]} />
-
-
-        </View>
-        <Text style={[styles.progressText, { color: item.color }]}>{item.progress}%</Text>
-    </View>
+  <View style={styles.challengeContainer}>
+      <View style={[styles.challengeIconContainer, { backgroundColor: `${item.color}20` }]}>
+          <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />
+      </View>
+      <Text style={styles.challengeTitle}>{item.title}</Text>
+      <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: `${item.progress}%`, backgroundColor: item.color }]} />
+      </View>
+      <Text style={[styles.progressText, { color: item.color }]}>{item.progress}%</Text>
+  </View>
 );
+
 
 // Main Screen
 const HomeScreen = () => {
@@ -216,218 +209,239 @@ const HomeScreen = () => {
   const isDarkMode = colorScheme === "dark";
   const [currentMonth, setCurrentMonth] = useState(new Date().toLocaleString('default', { month: 'long' }));
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [medications, setMedications] = useState([]);
 
   useEffect(() => {
+      console.log("currentUser", auth.currentUser);
+      console.log("Firestore:", db);
 
-    console.log("currentUser", auth.currentUser);
-    console.log("Firestore:", db);
+      const fetchUserData = async () => {
+          const user = auth.currentUser;
+          if (user) {
+              try {
+                  const userRef = doc(db, "users", user.uid);
+                  const userDoc = await getDoc(userRef);
 
-    const fetchUserData = async () => {
-      const user = auth.currentUser;
-      if (user) {
-          try {
-              const userRef = doc(db, "users", user.uid);
-              const userDoc = await getDoc(userRef);
+                  if (userDoc.exists()) {
+                      const userData = userDoc.data();
+                      console.log("تم جلب بيانات المستخدم:", userData);
 
-              if (userDoc.exists()) {
-                  const userData = userDoc.data();
-                  console.log("User data fetched from Firestore:", userData);
+                      setLoggedInUserName(userData?.name || 'Guest'); 
+                      setLoggedInUserImage(userData?.photoURL || "https://via.placeholder.com/150");
 
-                  setLoggedInUserName(userData?.name || 'Guest');
-                  setLoggedInUserImage(userData?.photoURL || "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg");
-              } else {
-                  console.log("User document not found in Firestore for UID:", user.uid);
+                      fetchMedications(userData?.email);
+                  } else {
+                      console.log("لم يتم العثور على المستخدم في Firestore.");
+                  }
+              } catch (error) {
+                  console.error("خطأ أثناء جلب بيانات المستخدم:", error);
               }
-          } catch (error) {
-              console.error("Error during fetching user data from Firestore:", error);
+          } else {
+              console.log("لا يوجد مستخدم مسجل حالياً.");
           }
-      } else {
-          console.log("No user is currently logged in.");
-      }
-  };
+      };
 
-  fetchUserData();
+      const fetchMedications = async (userEmail) => {
+          try {
+              const medicationsRef = collection(db, "medication");
+              const q = query(medicationsRef, where("userEmail", "==", userEmail));
+              const querySnapshot = await getDocs(q);
 
-  const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-          fetchUserData();
-      }
-  });
+              const meds = querySnapshot.docs.map(doc => ({
+                  id: doc.id,
+                  ...doc.data()
+              }));
 
-  return () => unsubscribe();
+              setMedications(meds);
+              console.log("تم جلب الأدوية:", meds);
+          } catch (error) {
+              console.error("خطأ أثناء جلب بيانات الأدوية:", error);
+          }
+      };
 
-}, []);
+      fetchUserData();
 
-useEffect(() => {
-    const interval = setInterval(() => {
-        setCurrentHour(new Date().getHours());
-    }, 60000);
-    return () => clearInterval(interval);
-}, []);
-  const medicines = medicinesData[selectedDate] || [];
+      const unsubscribe = auth.onAuthStateChanged(user => {
+          if (user) {
+              fetchUserData();
+          }
+      });
+
+      return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+      const interval = setInterval(() => {
+          setCurrentHour(new Date().getHours());
+      }, 60000);
+      return () => clearInterval(interval);
+  }, []);
+
   const greeting = currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening";
 
   const sections = [
       { type: 'header', id: 'header' },
       { type: 'calendar', id: 'calendar' },
-      { type: 'medications', id: 'medications', data: medicines },
+      { type: 'medications', id: 'medications', data: medications },
       { type: 'challenges', id: 'challenges', data: challenges },
       { type: 'stats', id: 'stats' }
   ];
 
+
   const renderItem = ({ item }: { item: typeof sections[0] }) => {
-      switch (item.type) {
-          case 'header':
-              return (
-                  <View style={styles.headerContainer}>
-                      <View style={styles.headerContent}>
-                          <View style={styles.userInfo}>
+    switch (item.type) {
+        case 'header':
+            return (
+                <View style={styles.headerContainer}>
+                    <View style={styles.headerContent}>
+                        <View style={styles.userInfo}>
+                            <Image source={{ uri: loggedInUserImage || "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg" }} style={styles.userImage} />
+                            <View>
+                                <Text style={[styles.greetingText, isDarkMode && styles.darkText]}>{greeting}</Text>
+                                <Text style={[styles.userName, isDarkMode && styles.darkText]}>{loggedInUserName}</Text>
+                            </View>
+                        </View>
+                        <View style={styles.headerActions}>
+                            <TouchableOpacity onPress={() => router.push("/screens/AddNewMedication")}>
+                                <Ionicons name="add-circle-outline" size={35} color={isDarkMode ? "#fff" : "#062654"} />
+                            </TouchableOpacity>
+                            <HamburgerMenu />
+                        </View>
+                    </View>
+                    <Text style={[styles.headerSubText, isDarkMode && styles.darkSubText]}>
+                        Stay on track with your health goals!
+                    </Text>
+                </View>
+            );
 
-                              <Image source={{ uri: loggedInUserImage || "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg" }} style={styles.userImage} />
+        case 'calendar':
+            return (
+                <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Calendar</Text>
+                        <Text style={[styles.monthText, isDarkMode && styles.darkSubText]}>{`${currentMonth} ${currentYear}`}</Text>
+                    </View>
+                    <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
+                </View>
+            );
 
-                              <View>
-                                  <Text style={[styles.greetingText, isDarkMode && styles.darkText]}>{greeting}</Text>
-                                  <Text style={[styles.userName, isDarkMode && styles.darkText]}>{loggedInUserName}</Text>
-                              </View>
-                          </View>
-                          <View style={styles.headerActions}>
-                              <TouchableOpacity onPress={() => router.push("/screens/AddNewMedication")}>
-                                  <Ionicons name="add-circle-outline" size={35} color={isDarkMode ? "#fff" : "#062654"} />
-                              </TouchableOpacity>
-                              <HamburgerMenu />
-                          </View>
-                      </View>
-                      <Text style={[styles.headerSubText, isDarkMode && styles.darkSubText]}>
-                          Stay on track with your health goals!
-                      </Text>
-                  </View>
-              );
+        case 'medications':
+            return (
+                <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Today's Medication</Text>
+                        <TouchableOpacity onPress={() => router.push('/(tabs)/new')}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Text style={styles.viewAllText}>View All</Text>
+                                <MotiView
+                                    from={{ translateX: -10 }}
+                                    animate={{ translateX: 10 }}
+                                    transition={{
+                                        type: "timing",
+                                        duration: 800,
+                                        loop: true,
+                                        repeatReverse: true,
+                                        easing: Easing.inOut(Easing.ease),
+                                    }}
+                                    style={{ padding: 8 }}
+                                >
+                                    <FontAwesome5
+                                        name="angle-double-right"
+                                        size={24}
+                                        color="#FFD700"
+                                    />
+                                </MotiView>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                    <FlatList
+                        data={Array.isArray(item.data) && item.data.every((med) => 'medicationName' in med) ? item.data : []}
+                        horizontal
+                        keyExtractor={(med) => med.id}
+                        renderItem={({ item: med }) => <MedicineItem item={med} />}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.medicineList}
+                    />
+                </View>
+            );
 
+        case 'challenges':
+            return (
+                <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Health Challenges</Text>
+                        <TouchableOpacity onPress={() => router.push('/(tabs)/challenge')}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Text style={styles.viewAllText}>View All</Text>
+                                <MotiView
+                                    from={{ translateX: -10 }}
+                                    animate={{ translateX: 10 }}
+                                    transition={{
+                                        type: "timing",
+                                        duration: 800,
+                                        loop: true,
+                                        repeatReverse: true,
+                                        easing: Easing.inOut(Easing.ease),
+                                    }}
+                                    style={{ padding: 8 }}
+                                >
+                                    <FontAwesome5
+                                        name="angle-double-right"
+                                        size={24}
+                                        color="#FFD700"
+                                    />
+                                </MotiView>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                    <FlatList
+                        data={Array.isArray(item.data) && item.data.every((challenge) => 'title' in challenge) ? item.data : []}
+                        horizontal
+                        keyExtractor={(challenge) => challenge.id}
+                        renderItem={({ item }) => <ChallengeItem item={item} />}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.challengeList}
+                    />
+                </View>
+            );
 
-                case 'calendar':
-                  return (
-                      <View style={styles.sectionContainer}>
-                          <View style={styles.sectionHeader}>
-                              <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Calendar</Text>
-                              <Text style={[styles.monthText, isDarkMode && styles.darkSubText]}>{`${currentMonth} ${currentYear}`}</Text>
+        case 'stats':
+            return (
+                <View style={[styles.statsContainer, isDarkMode ? styles.darkStatsContainer : styles.lightStatsContainer]}>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statValue}>24</Text>
+                        <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Medications</Text>
+                    </View>
+                    <View style={styles.statSeparator} />
+                    <View style={styles.statItem}>
+                        <Text style={styles.statValue}>18</Text>
+                        <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Completed</Text>
+                    </View>
+                    <View style={styles.statSeparator} />
+                    <View style={styles.statItem}>
+                        <Text style={styles.statValue}>6</Text>
+                        <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Pending</Text>
+                    </View>
+                </View>
+            );
 
-                          </View>
-                          <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
-                      </View>
-                  );
-              case 'medications':
-                  return (
-                      <View style={styles.sectionContainer}>
-                          <View style={styles.sectionHeader}>
-                              <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Today's Medication</Text>
-                              <TouchableOpacity onPress={() => router.push('/(tabs)/new')}>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                      <Text style={styles.viewAllText}>View All</Text>
-                                      <MotiView
-                                          from={{ translateX: -10 }}
-                                          animate={{ translateX: 10 }}
-                                          transition={{
-                                              type: "timing",
-                                              duration: 800,
-                                              loop: true,
-                                              repeatReverse: true,
-                                              easing: Easing.inOut(Easing.ease),
-                                          }}
-                                          style={{ padding: 8 }}
-                                      >
-                                          <FontAwesome5
-                                              name="angle-double-right"
-                                              size={24}
-                                              color="#FFD700"
-                                          />
-                                      </MotiView>
-                                  </View>
-                              </TouchableOpacity>
-                          </View>
-                          <FlatList
-                              data={Array.isArray(item.data) && item.data.every((med) => 'name' in med) ? item.data : []}
-                              horizontal
-                              keyExtractor={(med) => med.id}
-                              renderItem={({ item: med }) => <MedicineItem item={med} />}
-                              showsHorizontalScrollIndicator={false}
-                              contentContainerStyle={styles.medicineList}
-                          />
-                      </View>
-                  );
-              case 'challenges':
-                  return (
-                      <View style={styles.sectionContainer}>
-                          <View style={styles.sectionHeader}>
-                              <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Health Challenges</Text>
-                              <TouchableOpacity onPress={() => router.push('/(tabs)/challenge')}>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                      <Text style={styles.viewAllText}>View All</Text>
-                                      <MotiView
-                                          from={{ translateX: -10 }}
-                                          animate={{ translateX: 10 }}
-                                          transition={{
-                                              type: "timing",
-                                              duration: 800,
-                                              loop: true,
-                                              repeatReverse: true,
-                                              easing: Easing.inOut(Easing.ease),
-                                          }}
-                                          style={{ padding: 8 }}
-                                      >
-                                          <FontAwesome5
-                                              name="angle-double-right"
-                                              size={24}
-                                              color="#FFD700"
-                                          />
-                                      </MotiView>
-                                  </View>
-                              </TouchableOpacity>
-                          </View>
-                          <FlatList
-                              data={Array.isArray(item.data) && item.data.every((challenge) => 'title' in challenge) ? item.data : []}
-                              horizontal
-                              keyExtractor={(challenge) => challenge.id}
-                              renderItem={({ item }) => <ChallengeItem item={item} />}
-                              showsHorizontalScrollIndicator={false}
-                              contentContainerStyle={styles.challengeList}
-                          />
-                      </View>
-                  );
-              case 'stats':
-                  return (
-                      <View style={[styles.statsContainer, isDarkMode ? styles.darkStatsContainer : styles.lightStatsContainer]}>
-                      <View style={styles.statItem}>
-                          <Text style={styles.statValue}>24</Text>
-                          <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Medications</Text>
-                      </View>
-                      <View style={styles.statSeparator} />
-                      <View style={styles.statItem}>
-                          <Text style={styles.statValue}>18</Text>
-                          <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Completed</Text>
-                      </View>
-                      <View style={styles.statSeparator} />
-                      <View style={styles.statItem}>
-                          <Text style={styles.statValue}>6</Text>
-                          <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Pending</Text>
-                      </View>
-                  </View>
-                  );
-              default:
-                  return null;
-          }
-      };
-      return (
-        <View style={[styles.container, isDarkMode && styles.darkContainer]}>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? '#121212' : '#FFFFFF'} />
-            <FlatList
-                data={sections}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                contentContainerStyle={styles.contentContainer}
-                showsVerticalScrollIndicator={false}
-            />
-        </View>
-    );
+        default:
+            return null;
+    }
+};
+
+return (
+  <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? '#121212' : '#FFFFFF'} />
+      <FlatList
+          data={sections}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+      />
+  </View>
+);
 };
 
 const styles = StyleSheet.create({
