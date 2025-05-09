@@ -42,7 +42,7 @@ export default function RegisterScreen() {
   };
   
   const [request, response, promptAsync] = Google.useAuthRequest({
-          expoClientId: "1042740888608-5j1fklmvlev4vitrhot1bcr8nlm1h9sq.apps.googleusercontent.com",
+          clientId: "1042740888608-5j1fklmvlev4vitrhot1bcr8nlm1h9sq.apps.googleusercontent.com",
           androidClientId: "1042740888608-dc7fef2ol3lma2q4k1ni8j1mrmg7nf55.apps.googleusercontent.com",
           webClientId: "1042740888608-5am9h15ckoag6jrftc1q9kvmv7prjl0c.apps.googleusercontent.com",
           redirectUri: "https://auth.expo.io/@aya21/project",
