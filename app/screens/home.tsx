@@ -113,7 +113,7 @@ useEffect(() => {
                     const userData = userDoc.data();
                     console.log("User data fetched from Firestore:", userData);
 
-                    // التحقق من التواريخ بشكل آمن
+                
                     if (userData?.someDateField) {
                         const date = new Date(userData.someDateField);
                         if (isNaN(date.getTime())) {
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     headerActions: {
         flexDirection: "row",
         alignItems: "center",
-        left: 50,
+        left: 90,
         gap: 16,
     },
     userInfo: {

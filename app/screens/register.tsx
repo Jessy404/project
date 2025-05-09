@@ -18,7 +18,7 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const {userDetail ,setUserDetail} =useContext(userDetailContext);
-  // const handleRegister = () => {
+
   //   router.replace("/(tabs)/home");
   // };
   WebBrowser.maybeCompleteAuthSession();

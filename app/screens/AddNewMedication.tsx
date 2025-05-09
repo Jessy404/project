@@ -8,6 +8,9 @@ import {
   TextInput,
   Image,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -147,6 +150,15 @@ const AddNewMedication = () => {
   };
 
   return (
+    <KeyboardAvoidingView
+  style={{ flex: 1 }}
+  behavior={Platform.OS === "ios" ? "padding" : "padding"}
+  keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
+>
+    <ScrollView
+ 
+    keyboardShouldPersistTaps="handled"
+  >
     <View style={styles.container}>
     <View style={styles.header}>
     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -324,6 +336,8 @@ const AddNewMedication = () => {
         ),
       }} />
     </View>
+    </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
