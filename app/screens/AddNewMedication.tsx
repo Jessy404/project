@@ -28,6 +28,7 @@ interface Medication {
   startDate: string;
   endDate: string;
   reminderType: string;
+  dosesPerDay: string; // Added dosesPerDay property
 }
 
 const AddNewMedication = () => {
@@ -42,6 +43,7 @@ const AddNewMedication = () => {
   const [reminderType, setReminderType] = useState<string>("");
   const [medications, setMedications] = useState<Medication[]>([]);
   const [whenToTakeModalVisible, setWhenToTakeModalVisible] = useState(false);
+  const [dosesPerDay, setDosesPerDay] = useState<string>("");
   const medicationOptions = ["Tablet", "Capsules", "Drops", "Syrup", "Injection"];
   const router = useRouter();
   const [moveLeft] = useState(new Animated.Value(0));   
@@ -110,7 +112,8 @@ const AddNewMedication = () => {
             whenToTake,
             startDate,
             endDate,
-            reminderType,
+            dosesPerDay,
+            reminderType: ""
           };
 
           try {
@@ -148,7 +151,7 @@ const AddNewMedication = () => {
     <View style={styles.header}>
     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
   <Animated.View style={{ flexDirection: "row", alignItems: "center", transform: [{ translateX: moveBack }] }}>
-    <FontAwesome5 name="angle-double-left" size={30} color="#2265A2" />
+    <FontAwesome5 name="angle-double-left" size={30} color="#FFD700" />
     <Text style={styles.backText}>Back</Text>
   </Animated.View>
 </TouchableOpacity>
@@ -159,7 +162,7 @@ const AddNewMedication = () => {
       <Image source={require("../../assets/images/MED.png")} style={styles.image} />
 
       <View style={styles.inputWrapper}>
-        <Ionicons name="medkit" size={20} color="black" style={styles.iconLeft} />
+        <Ionicons name="medkit" size={20} color="#2265A2" style={styles.iconLeft} />
         <TextInput
           style={styles.input}
           placeholder="Medication Name"
@@ -167,13 +170,13 @@ const AddNewMedication = () => {
           onChangeText={setMedicationName}
         />
       </View>
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.button}>
-        <Fontisto name="drug-pack" size={24} color="black" />
-        <Text style={styles.buttonText}>{medicationType || "Select Medication Type"}</Text>
+      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.button1}>
+        <Fontisto name="drug-pack" size={24} color="#2265A2" />
+        <Text style={styles.buttonText1}>{medicationType || "Select Medication Type"}</Text>
       </TouchableOpacity>
 
       <View style={styles.inputWrapper}>
-        <FontAwesome name="eyedropper" size={24} color="black" style={styles.iconLeft} />
+        <FontAwesome name="eyedropper" size={24} color="#2265A2" style={styles.iconLeft} />
         <TextInput
           style={styles.input}
           placeholder="Dose (e.g. 2, 15ml)"
@@ -183,12 +186,12 @@ const AddNewMedication = () => {
       </View>
 
       <TouchableOpacity onPress={() => setWhenToTakeModalVisible(true)} style={styles.button}>
-        <Fontisto name="clock" size={20} color="black" style={styles.iconLeft} />
+        <Fontisto name="clock" size={20} color="#FFF" style={styles.iconLeft} />
         <Text style={styles.buttonText}>{whenToTake || "Select Time to Take"}</Text>
       </TouchableOpacity>
 
       <View style={styles.inputWrapper}>
-        <Ionicons name="calendar-outline" size={24} color="black" style={styles.iconLeft} />
+        <Ionicons name="calendar-outline" size={24} color="#2265A2" style={styles.iconLeft} />
         <TextInput
           style={styles.input}
           placeholder="Start Date (MM/DD/YYYY)"
@@ -198,7 +201,7 @@ const AddNewMedication = () => {
       </View>
 
       <View style={styles.inputWrapper}>
-        <Ionicons name="calendar-outline" size={24} color="black" style={styles.iconLeft} />
+        <Ionicons name="calendar-outline" size={24} color="#2265A2" style={styles.iconLeft} />
         <TextInput
           style={styles.input}
           placeholder="End Date (MM/DD/YYYY)"
@@ -206,9 +209,19 @@ const AddNewMedication = () => {
           onChangeText={setEndDate}
         />
       </View>
+<View style={styles.inputWrapper}>
+  <Ionicons name="repeat" size={24} color="#2265A2" style={styles.iconLeft} />
+  <TextInput
+    style={styles.input}
+    placeholder="Doses Per Day"
+    keyboardType="numeric"
+    value={dosesPerDay}
+    onChangeText={setDosesPerDay}
+  />
+</View>
 
       <TouchableOpacity style={styles.addButton} onPress={() => setReminderModalVisible(true)}>
-        <AntDesign name="bells" size={20} color="black" style={styles.iconLeft} />
+        <AntDesign name="bells" size={20} color="#fff" style={styles.iconLeft} />
         <Text style={styles.addButtonText}>Add Reminder</Text>
       </TouchableOpacity>
 
@@ -318,23 +331,25 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "white", justifyContent: "flex-start", alignItems: "center", padding: 20 },
   header: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginTop: 40, marginBottom: 10 },
   backButton: { flexDirection: "row", alignItems: "center" },
-  backText: { fontSize: 20, color: "#2265A2", marginLeft: 5, fontWeight: "bold" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10, alignSelf: "center" },
-  image: { width: 272, height: 195, marginBottom: 0, marginLeft: 12 },
+  backText: { fontSize: 20, color: "#062654", marginLeft: 5, fontWeight: "bold" },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10, alignSelf: "center" ,color: "#062654"},
+  image: { width: 190, height: 190, marginBottom: 0, marginLeft: 12 },
   input1: { width: "100%", padding: 10, borderWidth: 1, borderColor: "#ccc", borderRadius: 25, marginBottom: 10 },
-  button: { padding: 10, backgroundColor: "#2265A2", borderRadius: 25, marginBottom: 10, width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" },
+  button: { padding: 10, backgroundColor: "#062654", borderRadius: 25, marginBottom: 10, width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" },
+  button1: { padding: 10, borderRadius: 25, borderWidth: 1, borderColor: "#ccc", marginBottom: 10, width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" },
   buttonText: { color: "white", fontSize: 16, marginLeft: 10 },
+  buttonText1: { color: "ccc", fontSize: 16, marginLeft: 10 },
   iconLeft1: { marginRight: 10 },
-  addButton: { padding: 10, backgroundColor: "#2265A2", borderRadius: 25, marginBottom: 10, width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" },
+  addButton: { padding: 10, backgroundColor: "#062654", borderRadius: 25, marginBottom: 10, width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" },
   addButtonText: { color: "white", fontSize: 16, marginLeft: 10 },
   saveButton: { backgroundColor: "#062654", padding: 10, borderRadius: 25, width: "100%", marginBottom: 10 },
   saveButtonText: { color: "white", fontSize: 18, fontWeight: "bold", textAlign: "center" },
-  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.7)" },
+  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center" },
   modalContainer: { backgroundColor: "white", padding: 20, borderRadius: 10, width: "80%" },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10, textAlign: "center" },
   optionButton: { padding: 10, borderBottomWidth: 1, borderBottomColor: "#ddd", width: "100%", alignItems: "center" },
   optionText: { fontSize: 16 },
-  closeButton: { marginTop: 10, padding: 11, backgroundColor: "#2265A2", borderRadius: 25  },
+  closeButton: { marginTop: 10, padding: 11, backgroundColor: "#062654", borderRadius: 25  },
   closeButtonText: { color: "white", fontSize: 17 , textAlign: "center"},
   toastSuccess: { padding: 10, backgroundColor: "green", borderRadius: 25, borderWidth: 2, borderColor: "green" },
   toastError: { padding: 10, backgroundColor: "crimson", borderRadius: 25, borderWidth: 2, borderColor: "darkred" },
