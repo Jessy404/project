@@ -1,101 +1,148 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { doc, setDoc, getDoc, getDocs, collection, updateDoc } from "firebase/firestore";
+import { db } from "../../config/firebaseConfig"; 
+import { Ionicons } from '@expo/vector-icons';
+import { getAuth } from "firebase/auth";
+
 
 interface Challenge {
   id: string;
   title: string;
-  image: string;
+  icon: string;
   rating: number;
+  joinedUsers?: string[]; 
 }
-
-const challenges: Challenge[] = [
-  { id: "1", title: "Drink 2 liters of water today 💧", image: "https://img.icons8.com/ios-filled/100/000000/water.png", rating: 0 },
-  { id: "2", title: "Walk 10,000 steps 🚶‍♂", image: "https://img.icons8.com/ios-filled/100/000000/walking.png", rating: 0 },
-  { id: "3", title: "Eat 5 servings of fruits or vegetables 🍎🥦", image: "https://img.icons8.com/ios-filled/100/000000/vegetarian-food.png", rating: 0 },
-  { id: "4", title: "Sleep for 7 hours straight 😴", image: "https://img.icons8.com/ios-filled/100/000000/sleeping.png", rating: 0 },
-  { id: "5", title: "Avoid processed sugar today 🚫🍭", image: "https://img.icons8.com/ios-filled/100/000000/no-sugar.png", rating: 0 },
-  { id: "6", title: "Meditate for 10 minutes 🧘‍♀", image: "https://www.pngmart.com/files/5/Meditating-PNG-Pic.png", rating: 0  },
-  { id: "7", title: "No phone use 1 hour before bed 📵", image: "https://cdn-icons-png.flaticon.com/512/223/223358.png", rating: 0  },
-  { id: "8", title: "Read for 30 minutes 📖", image: "https://img.icons8.com/ios-filled/100/000000/book.png", rating: 0 },
-  { id: "9", title: "Do 15 minutes of stretching 🏋‍♀", image: "https://www.pngmart.com/files/15/Vector-Exercise-Stretching-PNG-Clipart.png", rating: 0 },
-  { id: "10", title: "Write down three things you're grateful for ✍", image: "https://img.icons8.com/ios-filled/100/000000/journal.png", rating: 0 },
-  { id: "11", title: "Drink a healthy smoothie 🥤", image: "https://cdn1.iconfinder.com/data/icons/diet-and-nutrition-10/64/drink-juice-smoothie-beverage-healthy-512.png", rating: 0 },
-  { id: "12", title: "Spend 30 minutes outdoors 🌳", image: "https://img.icons8.com/ios-filled/100/000000/park-bench.png", rating: 0 },
-  { id: "13", title: "Practice deep breathing for 5 minutes 🌬", image: "https://cdn2.iconfinder.com/data/icons/self-care-solid/64/breath-deep-breathing-woman-meditation-self_care-self_love-512.png", rating: 0 },
-  { id: "14", title: "Limit caffeine intake ☕", image: "https://cdn3.iconfinder.com/data/icons/eco-food-and-cosmetic-labels-4/128/caffeine_free_1-1024.png", rating: 0 },
-  ];
-
-
-interface CustomRatingProps {
-  rating: number;
-  onRatingChange: (rating: number) => void;
-  size?: number;
-}
-
-const CustomRating: React.FC<CustomRatingProps> = ({ rating, onRatingChange, size = 20 }) => {
-  return (
-    <View style={{ flexDirection: 'row' }}>
-      {Array.from({ length: 5 }, (_, index) => {
-        const starNumber = index + 1;
-        return (
-          <TouchableOpacity key={starNumber} onPress={() => onRatingChange(starNumber)}>
-            <FontAwesome
-              name={starNumber <= rating ? 'star' : 'star-o'}
-              size={size}
-              color={starNumber <= rating ? '#FFD700' : '#ccc'}
-              style={{ marginHorizontal: 2 }}
-            />
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-};
 
 const ChallengeScreen: React.FC = () => {
-  const [challengeList, setChallengeList] = useState<Challenge[]>(challenges);
+  
+  const [challengeList, setChallengeList] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState<boolean>(true); 
 
-  const handleChallengePress = (id: string) => {
-    alert('Success!✅');
+  
+  const challenges: Challenge[] = [
+    { id: "1", title: "Drink 2 liters of water today 💧", icon: "tint", rating: 0 },
+    { id: "2", title: "Eat 5 servings of fruits or vegetables 🍎🥦", icon: "apple", rating: 0 },
+    { id: "3", title: "Sleep for 7 hours straight 😴", icon: "bed", rating: 0 },
+    { id: "4", title: "Meditate for 10 minutes 🧘‍♀", icon: "leaf", rating: 0  },
+    { id: "5", title: "No phone use 1 hour before bed 📵", icon: "mobile", rating: 0  },
+    { id: "6", title: "Read for 30 minutes 📖", icon: "book", rating: 0  },
+    { id: "7", title: "Do 15 minutes of stretching 🏋‍♀", icon: "heartbeat", rating: 0 },
+    { id: "8", title: "Drink a healthy smoothie 🥤", icon: "glass", rating: 0  },
+    { id: "9", title: "Spend 30 minutes outdoors 🌳", icon: "tree", rating: 0  },
+    { id: "10", title: "Practice deep breathing for 5 minutes 🌬", icon: "cloud", rating: 0 },
+    { id: "11", title: "Limit caffeine intake ☕", icon: "coffee", rating: 0 },
+  ];
+
+  
+  const uploadChallengesToFirestore = async () => {
+    try {
+      const challengesRef = collection(db, "challenges");
+
+      
+      for (const challenge of challenges) {
+        const challengeDocRef = doc(challengesRef, challenge.id);
+        await setDoc(challengeDocRef, challenge);
+        console.log(`Challenge "${challenge.title}" added to Firestore.`);
+      }
+    } catch (e) {
+      console.error('Error uploading challenges to Firestore', e);
+    }
   };
 
-  const handleRatingChange = (id: string, rating: number) => {
-    setChallengeList((prevChallenges) =>
-      prevChallenges.map((challenge) =>
-        challenge.id === id ? { ...challenge, rating } : challenge
-      )
-    );
+  
+useEffect(() => {
+  (async () => {
+  
+    await uploadChallengesToFirestore();
+
+    
+    try {
+      const challengesRef = collection(db, "challenges");
+      const snapshot = await getDocs(challengesRef);
+      
+      
+      console.log("Challenges data:", snapshot.docs.map(doc => doc.data()));
+
+      const challengesData = snapshot.docs.map(doc => ({
+        id: doc.id, 
+        ...doc.data()
+      }));
+      setChallengeList(challengesData as Challenge[]);
+    } catch (e) {
+      console.error('Error loading challenges', e);
+    } finally {
+      setLoading(false); 
+    }
+  })();
+}, []);
+
+
+  
+  const renderChallengeItem = ({ item }: { item: Challenge }) => (
+    <View style={styles.challengeItem}>
+      <Ionicons name={item.icon as any} size={30} color="#2265A2" style={styles.iconContainer} />
+      <View style={styles.textContainer}>
+        <Text style={styles.challengeText}>{item.title}</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={async () => await handleJoinChallenge(item.id)}
+        >
+          <Text style={styles.buttonText}>Join</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  
+  const handleJoinChallenge = async (challengeId: string) => {
+    const userId = getAuth().currentUser?.uid; 
+
+    if (!userId) {
+      console.error("User is not authenticated");
+      return;
+    }
+
+    try {
+      const challengeDocRef = doc(db, "challenges", challengeId);
+
+    
+      const challengeSnap = await getDoc(challengeDocRef);
+      const challengeData = challengeSnap.data() as Challenge;
+
+      
+      const joinedUsers = challengeData.joinedUsers || [];
+      if (!joinedUsers.includes(userId)) {
+        joinedUsers.push(userId);
+      }
+
+      
+      await updateDoc(challengeDocRef, { joinedUsers });
+
+      console.log(`User ${userId} joined challenge ${challengeId}`);
+      setChallengeList(prevList =>
+        prevList.map(challenge =>
+          challenge.id === challengeId
+            ? { ...challenge, joinedUsers }
+            : challenge
+        )
+      );
+    } catch (error) {
+      console.error("Error joining challenge: ", error);
+    }
   };
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
 
   return (
-    <View style={styles.container} pointerEvents="auto">
-      <FlatList
-        data={challengeList}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 5 }}
-        ListHeaderComponent={<Text style={styles.header}>My Challenge</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.challengeItem}>
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: item.image }} style={styles.challengeImage} />
-            </View>
-            <View style={styles.textContainer}>
-              <Text style={styles.challengeText}>{item.title}</Text>
-              <CustomRating
-                rating={item.rating}
-                onRatingChange={(newRating) => handleRatingChange(item.id, newRating)}
-                size={16}
-              />
-            </View>
-            <TouchableOpacity style={styles.button} onPress={() => handleChallengePress(item.id)}>
-              <Text style={styles.buttonText}>Join</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      />
-    </View>
+    <FlatList
+      data={challengeList}
+      renderItem={renderChallengeItem}
+      keyExtractor={(item) => item.id}
+      style={styles.container}
+    />
   );
 };
 
@@ -104,6 +151,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#ffffff",
     padding: 20,
+    marginBottom: 70,
   },
   header: {
     fontSize: 20,
@@ -117,27 +165,22 @@ const styles = StyleSheet.create({
   challengeItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#EAF0F7",
+    backgroundColor: "#ffffff",
     padding: 10,
     margin: 5,
     marginVertical: 8,
     borderRadius: 25,
     elevation: 3,
   },
-  imageContainer: {
-    backgroundColor: "#7FADE0",
-    padding: 10,
-    borderRadius: 20,
+  iconContainer: {
+    backgroundColor: "#2265A2",
+    padding: 15,
+    width: 70,
+    height: 70,
+    borderRadius: 23,
     marginRight: 10,
-    width: 60,
-    height: 60,
     justifyContent: "center",
     alignItems: "center",
-  },
-  challengeImage: {
-    width: 50,
-    height: 50,
-    resizeMode: "contain"
   },
   textContainer: {
     flex: 3,
@@ -159,6 +202,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
   },
+  doneText: {
+    color: "#888",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
 });
+
 
 export default ChallengeScreen;
