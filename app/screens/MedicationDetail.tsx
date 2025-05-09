@@ -137,7 +137,7 @@ const MedicationDetail = () => {
       <View style={styles.topHalfCircle} />
 
       <View style={{ position: "absolute", top: 70, left: 20, zIndex: 10 }}>
-        {!isEditing ? (
+        { (
           <MotiView
             from={{ translateX: -10 }}
             animate={{ translateX: 10 }}
@@ -158,25 +158,7 @@ const MedicationDetail = () => {
             />
             <Text style={styles.backText}>Back</Text>
           </MotiView>
-        ) : (
-          <View
-            style={{
-              position: "absolute",
-              top: -25,
-              left: -1,
-              zIndex: 10,
-              alignItems: "center",
-            }}
-          >
-            <MaterialCommunityIcons
-              name="format-color-marker-cancel"
-              size={40}
-              color="#FFF"
-              onPress={handleCancel}
-            />
-            <Text style={styles.cancelText}>Cancel Change</Text>
-          </View>
-        )}
+        ) }
       </View>
 
       
