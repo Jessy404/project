@@ -83,10 +83,10 @@ export default function LoginScreen() {
       }
 
 
-      if (!email.endsWith('@gmail.com')) {
-        Alert.alert('Invalid Email', 'Email must end with @gmail.com');
-        return;
-    }
+    //   if (!email.endsWith('@gmail.com')) {
+    //     Alert.alert('Invalid Email', 'Email must end with @gmail.com');
+    //     return;
+    // }
         setLoading(true);
 
         try {
