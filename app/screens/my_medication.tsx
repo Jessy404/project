@@ -99,34 +99,28 @@ const MyMedication = () => {
 const getNextDoseTime = (dosesPerDay: number) => {
   const now = new Date();
 
-  const startHour = 8; // أول جرعة الساعة 8 صباحًا
-  const endHour = 22;  // آخر جرعة الساعة 10 مساءً
-  const totalAvailableMinutes = (endHour - startHour) * 60;
-
-  // الفاصل بين كل جرعة والتانية
-  const interval = totalAvailableMinutes / (dosesPerDay - 1);
-
   const doseTimes: Date[] = [];
+  const intervalInMinutes = (24 * 60) / dosesPerDay; 
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
 
   for (let i = 0; i < dosesPerDay; i++) {
-    const dose = new Date(now);
-    dose.setHours(startHour, 0, 0, 0);
-    dose.setMinutes(dose.getMinutes() + i * interval);
-    doseTimes.push(dose);
+    const doseTime = new Date(startOfDay.getTime() + i * intervalInMinutes * 60000);
+    doseTimes.push(doseTime);
   }
 
-  // رجّع أول جرعة لسه مجتش
   for (let dose of doseTimes) {
     if (dose > now) {
       return dose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
   }
 
-  // لو الوقت عدّى كل الجرعات، رجّع أول جرعة لبكره
-  const firstTomorrow = new Date(doseTimes[0]);
-  firstTomorrow.setDate(firstTomorrow.getDate() + 1);
-  return firstTomorrow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // لو كل الجرعات عدت، نرجع أول جرعة لتاني يوم
+  const nextDayDose = new Date(doseTimes[0].getTime());
+  nextDayDose.setDate(nextDayDose.getDate() + 1);
+  return nextDayDose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
+
 
   const filteredMedications = medications.filter((item) =>
     item.medicationName.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -156,6 +150,9 @@ const getNextDoseTime = (dosesPerDay: number) => {
 <Text style={styles.details}>Dose: {item.dose}</Text>
 <Text style={styles.details}>
   Next Dose: {getNextDoseTime(item.dosesPerDay)}
+</Text>
+<Text style={styles.details}>dosesPerDay
+  : {item.dosesPerDay}
 </Text>
 
          <View style={styles.ratingContainer}>
