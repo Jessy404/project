@@ -30,6 +30,9 @@ export default function Profile() {
       <TouchableOpacity style={styles.card} onPress={() => router.push('/screens/challenge')}>
         <Text style={styles.cardText}>My Challenges</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
   
     </View>
   );
