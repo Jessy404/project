@@ -179,7 +179,7 @@ const MedicationDetail = () => {
         )}
       </View>
 
-      {/* عرض اسم الدواء في حالة عدم التعديل */}
+      
 {!isEditing && (
   <Text style={[styles.title, { color: "#062654" }]}>
     {medication.medicationName}
