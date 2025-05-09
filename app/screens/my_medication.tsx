@@ -94,12 +94,26 @@ const MyMedication = () => {
       console.error("Error updating rating: ", error);
     }
   };
-  // const handleViewDetails = (id: string) => {
-  //   router.push(`/screens/MedicationDetail?id=${id}`);
+const getNextDoseTime = (frequencyPerDay: number) => {
+  const now = new Date();
 
-  // };
+  // ضبط أول جرعة على اليوم الحالي الساعة 8:00 صباحًا
+  const firstDose = new Date(now);
+  firstDose.setHours(8, 0, 0, 0); // 8:00 صباحًا
 
+  const intervalInMinutes = (24 * 60) / frequencyPerDay;
 
+  for (let i = 0; i < frequencyPerDay; i++) {
+    const doseTime = new Date(firstDose.getTime() + i * intervalInMinutes * 60000);
+    if (doseTime > now) {
+      return doseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  }
+
+  // إذا مرّ اليوم، نعرض أول جرعة لليوم التالي
+  const nextDayDose = new Date(firstDose.getTime() + 24 * 60 * 60000);
+  return nextDayDose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
   const filteredMedications = medications.filter((item) =>
     item.medicationName.toLowerCase().includes(searchText.toLowerCase()) ||
     item.medicationType.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -124,7 +138,13 @@ const MyMedication = () => {
             <FontAwesome5 name="pills" size={24} color="#2265A2" style={{ marginLeft: 10 }} />
           </View>
 
-          <View style={styles.ratingContainer}>
+ 
+<Text style={styles.details}>Dose: {item.dose}</Text>
+<Text style={styles.details}>
+  Next Dose: {getNextDoseTime(item.frequencyPerDay)}
+</Text>
+
+         <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
               <TouchableOpacity key={star} onPress={() => handleRating(item.docID, star)}>
                 <FontAwesome
@@ -137,14 +157,10 @@ const MyMedication = () => {
               </TouchableOpacity>
             ))}
           </View>
-
-          <Text style={styles.details}>Dose: {item.dose}</Text>
-          <Text style={styles.details}>Time: <FontAwesome5 name="clock" /> {item.startDate} - {item.endDate}</Text>
-
           <View style={styles.buttons}>
             {!item.taken && (
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: "#2265A2" }]}
+                style={[styles.button, { backgroundColor: "#062654" }]}
                 onPress={() => handleTaken(item.docID)}
               >
                 <Text style={styles.btnText}>Taken</Text>
@@ -216,7 +232,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#2265A2",
+    color: "#062654",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -290,10 +306,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   edit: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
   },
   delete: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
   },
   btnText: {
     color: "#FFF",
@@ -304,7 +320,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
     paddingVertical: 12,
     borderRadius: 20,
     marginBottom: 60,

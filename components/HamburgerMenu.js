@@ -44,15 +44,13 @@ const NotificationModal = () => {
               <Ionicons name="close" size={24} color="#333" />
             </TouchableOpacity>
 
-            {/* العنوان يظهر فقط إذا القائمة غير فاضية */}
+       
             {medications.length > 0 && (
               <>
                 <Text style={styles.title}>Have you taken these?</Text>
                 <Text style={styles.subtitle}>Mark them Taken or Skipped</Text>
               </>
             )}
-
-            {/* المحتوى */}
             {medications.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="checkmark-done-circle-outline" size={48} color="#4CAF50" />
