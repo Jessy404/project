@@ -1,163 +1,194 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { doc, setDoc, getDoc, getDocs, collection, updateDoc } from "firebase/firestore";
+import { db } from "../../config/firebaseConfig";
+import { Ionicons } from '@expo/vector-icons';
+import { getAuth } from "firebase/auth";
 
 interface Challenge {
   id: string;
   title: string;
-  image: string;
+  icon: string;
   rating: number;
+  joinedUsers?: string[];
+  maxUsers?: number;
 }
-
-const challenges: Challenge[] = [
-  { id: "1", title: "Drink 2 liters of water today 💧", image: "https://img.icons8.com/ios-filled/100/000000/water.png", rating: 0 },
-  { id: "2", title: "Walk 10,000 steps 🚶‍♂", image: "https://img.icons8.com/ios-filled/100/000000/walking.png", rating: 0 },
-  { id: "3", title: "Eat 5 servings of fruits or vegetables 🍎🥦", image: "https://img.icons8.com/ios-filled/100/000000/vegetarian-food.png", rating: 0 },
-  { id: "4", title: "Sleep for 7 hours straight 😴", image: "https://img.icons8.com/ios-filled/100/000000/sleeping.png", rating: 0 },
-  { id: "5", title: "Avoid processed sugar today 🚫🍭", image: "https://img.icons8.com/ios-filled/100/000000/no-sugar.png", rating: 0 },
-  { id: "6", title: "Meditate for 10 minutes 🧘‍♀", image: "https://www.pngmart.com/files/5/Meditating-PNG-Pic.png", rating: 0  },
-  { id: "7", title: "No phone use 1 hour before bed 📵", image: "https://cdn-icons-png.flaticon.com/512/223/223358.png", rating: 0  },
-  { id: "8", title: "Read for 30 minutes 📖", image: "https://img.icons8.com/ios-filled/100/000000/book.png", rating: 0 },
-  { id: "9", title: "Do 15 minutes of stretching 🏋‍♀", image: "https://www.pngmart.com/files/15/Vector-Exercise-Stretching-PNG-Clipart.png", rating: 0 },
-  { id: "10", title: "Write down three things you're grateful for ✍", image: "https://img.icons8.com/ios-filled/100/000000/journal.png", rating: 0 },
-  { id: "11", title: "Drink a healthy smoothie 🥤", image: "https://cdn1.iconfinder.com/data/icons/diet-and-nutrition-10/64/drink-juice-smoothie-beverage-healthy-512.png", rating: 0 },
-  { id: "12", title: "Spend 30 minutes outdoors 🌳", image: "https://img.icons8.com/ios-filled/100/000000/park-bench.png", rating: 0 },
-  { id: "13", title: "Practice deep breathing for 5 minutes 🌬", image: "https://cdn2.iconfinder.com/data/icons/self-care-solid/64/breath-deep-breathing-woman-meditation-self_care-self_love-512.png", rating: 0 },
-  { id: "14", title: "Limit caffeine intake ☕", image: "https://cdn3.iconfinder.com/data/icons/eco-food-and-cosmetic-labels-4/128/caffeine_free_1-1024.png", rating: 0 },
-  ];
-
-
-interface CustomRatingProps {
-  rating: number;
-  onRatingChange: (rating: number) => void;
-  size?: number;
-}
-
-const CustomRating: React.FC<CustomRatingProps> = ({ rating, onRatingChange, size = 20 }) => {
-  return (
-    <View style={{ flexDirection: 'row' }}>
-      {Array.from({ length: 5 }, (_, index) => {
-        const starNumber = index + 1;
-        return (
-          <TouchableOpacity key={starNumber} onPress={() => onRatingChange(starNumber)}>
-            <FontAwesome
-              name={starNumber <= rating ? 'star' : 'star-o'}
-              size={size}
-              color={starNumber <= rating ? '#FFD700' : '#ccc'}
-              style={{ marginHorizontal: 2 }}
-            />
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-};
 
 const ChallengeScreen: React.FC = () => {
-  const [challengeList, setChallengeList] = useState<Challenge[]>(challenges);
+  const [challengeList, setChallengeList] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const handleChallengePress = (id: string) => {
-    alert('Success!✅');
+  const challenges: Challenge[] = [
+    { id: "1", title: "Drink 2 liters of water 💧", icon: "water", rating: 0, maxUsers: 5 },
+    { id: "2", title: "Eat 5 servings of fruits 🍎", icon: "nutrition", rating: 0, maxUsers: 3 },
+    { id: "3", title: "Sleep for 7 hours 😴", icon: "bed", rating: 0 },
+    // باقي التحديات بنفس الشكل...
+  ];
+
+  const uploadChallengesToFirestore = async () => {
+    try {
+      const challengesRef = collection(db, "challenges");
+      for (const challenge of challenges) {
+        const challengeDocRef = doc(challengesRef, challenge.id);
+        await setDoc(challengeDocRef, challenge, { merge: true });
+      }
+    } catch (e) {
+      console.error('Error uploading challenges', e);
+    }
   };
 
-  const handleRatingChange = (id: string, rating: number) => {
-    setChallengeList((prevChallenges) =>
-      prevChallenges.map((challenge) =>
-        challenge.id === id ? { ...challenge, rating } : challenge
-      )
+  useEffect(() => {
+    (async () => {
+      await uploadChallengesToFirestore();
+      try {
+        const snapshot = await getDocs(collection(db, "challenges"));
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Challenge[];
+        setChallengeList(data);
+      } catch (e) {
+        console.error('Error loading challenges', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleJoinChallenge = async (challengeId: string) => {
+    const userId = getAuth().currentUser?.uid;
+    if (!userId) return;
+
+    const challengeDocRef = doc(db, "challenges", challengeId);
+    const snap = await getDoc(challengeDocRef);
+    const data = snap.data() as Challenge;
+    const joinedUsers = data.joinedUsers || [];
+
+    if (!joinedUsers.includes(userId) && (!data.maxUsers || joinedUsers.length < data.maxUsers)) {
+      joinedUsers.push(userId);
+      await updateDoc(challengeDocRef, { joinedUsers });
+      setChallengeList(prev =>
+        prev.map(ch =>
+          ch.id === challengeId ? { ...ch, joinedUsers } : ch
+        )
+      );
+    }
+  };
+
+  const renderChallengeItem = ({ item }: { item: Challenge }) => {
+    const userId = getAuth().currentUser?.uid;
+    const joined = item.joinedUsers?.includes(userId || '') || false;
+    const isFull = item.maxUsers && item.joinedUsers && item.joinedUsers.length >= item.maxUsers;
+
+    return (
+      <View style={styles.challengeItem}>
+        <Ionicons name={item.icon as any} size={30} color="#fff" style={styles.iconContainer} />
+        <View style={styles.textContainer}>
+          <Text style={styles.challengeText}>{item.title}</Text>
+          {item.maxUsers && (
+            <Text style={styles.counterText}>
+              {item.joinedUsers?.length || 0}/{item.maxUsers} joined
+            </Text>
+          )}
+        </View>
+        <TouchableOpacity
+          style={[styles.button, joined || isFull ? styles.buttonJoined : {}]}
+          onPress={() => handleJoinChallenge(item.id)}
+          disabled={joined || Boolean(isFull)}
+        >
+          <Text style={styles.buttonText}>
+            {isFull ? "Done" : joined ? "Joined" : "Join"}
+          </Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 
+  if (loading) return <Text style={styles.loading}>Loading...</Text>;
+
   return (
-    <View style={styles.container} pointerEvents="auto">
+    <View style={{ flex: 1, backgroundColor: "#fff", paddingBottom: 80 }}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Challenges</Text>
+        <Image
+          source={{ uri: "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg" }}
+          style={styles.headerImage}
+        />
+      </View>
       <FlatList
         data={challengeList}
+        renderItem={renderChallengeItem}
         keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 5 }}
-        ListHeaderComponent={<Text style={styles.header}>My Challenge</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.challengeItem}>
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: item.image }} style={styles.challengeImage} />
-            </View>
-            <View style={styles.textContainer}>
-              <Text style={styles.challengeText}>{item.title}</Text>
-              <CustomRating
-                rating={item.rating}
-                onRatingChange={(newRating) => handleRatingChange(item.id, newRating)}
-                size={16}
-              />
-            </View>
-            <TouchableOpacity style={styles.button} onPress={() => handleChallengePress(item.id)}>
-              <Text style={styles.buttonText}>Join</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        contentContainerStyle={{ padding: 20 }}
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ffffff",
+  headerContainer: {
     padding: 20,
+    paddingTop: 45,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   header: {
-    fontSize: 20,
-    paddingTop: 20,
-    fontWeight: '900',
-    textAlign: "center",
-    marginTop: 15,
-    marginBottom: 5,
+    fontSize: 26,
+    fontWeight: "900",
     color: "#062654",
+  },
+  headerImage: {
+    width: 40,
+    height: 40,
   },
   challengeItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#EAF0F7",
-    padding: 10,
-    margin: 5,
-    marginVertical: 8,
-    borderRadius: 25,
-    elevation: 3,
-  },
-  imageContainer: {
-    backgroundColor: "#7FADE0",
-    padding: 10,
+    backgroundColor: "#F8F9FA",
+    padding: 12,
+    marginBottom: 12,
     borderRadius: 20,
-    marginRight: 10,
-    width: 60,
-    height: 60,
-    justifyContent: "center",
-    alignItems: "center",
+    elevation: 2,
   },
-  challengeImage: {
-    width: 50,
-    height: 50,
-    resizeMode: "contain"
+  iconContainer: {
+    backgroundColor: "#062654",
+    padding: 14,
+    borderRadius: 20,
+    marginRight: 12,
   },
   textContainer: {
-    flex: 3,
+    flex: 1,
   },
   challengeText: {
-    fontSize: 14,
-    color: "#000",
-    marginBottom: 5,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 4,
+    color: "#062654",
+  },
+  counterText: {
+    fontSize: 12,
+    color: "#888",
   },
   button: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
+    paddingHorizontal: 14,
     paddingVertical: 6,
-    paddingHorizontal: 12,
     borderRadius: 15,
+  },
+  buttonJoined: {
+    backgroundColor: "#a3c0e0",
   },
   buttonText: {
     color: "#fff",
-    fontSize: 14,
     fontWeight: "bold",
+    fontSize: 12,
+  },
+  loading: {
+    marginTop: 50,
+    textAlign: "center",
+    fontSize: 16,
+    color: "#666",
   },
 });
 
