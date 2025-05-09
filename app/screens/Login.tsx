@@ -77,8 +77,18 @@ export default function LoginScreen() {
       }, [response]);
       
     const onSignInClick = async () => {
+      if (!email || !password) {
+        Alert.alert('Missing Fields', 'Please enter both email and password');
+        return;
+      }
+
+
+      if (!email.endsWith('@gmail.com')) {
+        Alert.alert('Invalid Email', 'Email must end with @gmail.com');
+        return;
+    }
         setLoading(true);
-    
+
         try {
             if (rememberMe) {
                 await AsyncStorage.setItem('rememberedEmail', email);
@@ -101,6 +111,7 @@ export default function LoginScreen() {
             console.log(error);
             if (Platform.OS === 'android') {
                 ToastAndroid.show('Incorrect Email or Password', ToastAndroid.BOTTOM);
+                Alert.alert('Error', 'Incorrect Email or Password');
             } else {
                 Alert.alert('Error', 'Incorrect Email or Password');
             }
