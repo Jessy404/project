@@ -330,17 +330,17 @@ useEffect(() => {
                 return (
                     <View style={[styles.statsContainer, isDarkMode ? styles.darkStatsContainer : styles.lightStatsContainer]}>
                         <View style={styles.statItem}>
-                            <Text style={styles.statValue}>24</Text>
+                            <Text style={styles.statValue}>10</Text>
                             <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Medications</Text>
                         </View>
                         <View style={styles.statSeparator} />
                         <View style={styles.statItem}>
-                            <Text style={styles.statValue}>18</Text>
+                            <Text style={styles.statValue}>10</Text>
                             <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Completed</Text>
                         </View>
                         <View style={styles.statSeparator} />
                         <View style={styles.statItem}>
-                            <Text style={styles.statValue}>6</Text>
+                            <Text style={styles.statValue}>0</Text>
                             <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Pending</Text>
                         </View>
                     </View>
