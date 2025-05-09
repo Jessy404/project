@@ -20,7 +20,7 @@ import { auth, db } from '../../config/firebaseConfig';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useContext } from 'react';
 import { userDetailContext } from "../../context/userDetailContext";
-import MedicineItem from "../../components/MedicineItem"; // تأكد من استيراد MedicineItem
+import MedicineItem from "../../components/MedicineItem"; 
 
 interface CalendarProps {
     onSelectDate: (date: number) => void;
@@ -268,7 +268,7 @@ useEffect(() => {
                             </TouchableOpacity>
                         </View>
                         <FlatList
-                            data={item.data} // استخدام item.data الذي يحتوي على الأدوية من الحالة
+                            data={item.data} 
                             horizontal
                             keyExtractor={(med) => med.id}
                             renderItem={({ item: med }) => (

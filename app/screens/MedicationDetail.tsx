@@ -1,185 +1,240 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+} from "react-native";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MotiView } from "moti";
-import { Pressable } from "react-native";
-import { MotiPressable } from "moti/build/interactions";
 import { Easing } from "react-native-reanimated";
+import { db } from "../../config/firebaseConfig";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 const MedicationDetail = () => {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+
   const [medication, setMedication] = useState<{
-    image: string;
-    id: string;
-    name: string;
-    type: string;
-    time: string;
+    medicationName: string;
+    medicationType: string;
     dose: string;
-    expiry: string;
-    rating: number;
     startDate: string;
     endDate: string;
+    reminderType: string;
+    taken?: boolean;
+    rating?: number;
   } | null>(null);
+
   const [isEditing, setIsEditing] = useState(false);
+
   const [editedMedication, setEditedMedication] = useState({
-    name: "",
-    type: "",
-    time: "",
+    medicationName: "",
+    medicationType: "",
     dose: "",
     startDate: "",
     endDate: "",
-    expiry: "",
+    reminderType: "",
     rating: 0,
   });
-  const medications = [
-    {
-      id: "1",
-      name: "Paracetamol",
-      type: "Tablet",
-      time: "08:00 AM",
-      dose: "500mg",
-      expiry: "12/2025",
-      rating: 4,
-      startDate: "01/01/2023",
-      endDate: "12/2023",
-      image: "https://via.placeholder.com/150/2265A2/FFFFFF?text=P", 
-    },
-    {
-      id: "2",
-      name: "Vitamin C",
-      type: "Syrup",
-      time: "12:00 PM",
-      dose: "1000mg",
-      expiry: "06/2024",
-      rating: 5,
-      startDate: "01/01/2023",
-      endDate: "06/2024",
-      image: "https://cdn.shopify.com/s/files/1/0218/7873/4920/files/3600542524261_1-min_600x600.png?v=1707300884",},
-    {
-      id: "3",
-      name: "Ibuprofen",
-      type: "Injection",
-      time: "06:00 PM",
-      dose: "400mg",
-      expiry: "09/2026",
-      rating: 3,
-      startDate: "02/01/2023",
-      endDate: "02/2024",
-      image: "https://via.placeholder.com/150/2265A2/FFFFFF?text=I",
-    },
-  ];
-  
+
   useEffect(() => {
-    if (id) {
-      const medicationData = medications.find((med) => med.id === id);
-      setMedication(medicationData || null);
-      if (medicationData) {
-        setEditedMedication({
-          name: medicationData.name,
-          type: medicationData.type,
-          dose: medicationData.dose,
-          startDate: medicationData.startDate,
-          endDate: medicationData.endDate,
-          expiry: medicationData.expiry,
-          rating: medicationData.rating,
-          time: medicationData.time,
-        });
-      }
+    if (id && typeof id === "string") {
+      const fetchMedication = async () => {
+        try {
+          const docRef = doc(db, "medication", id);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setMedication({
+              medicationName: data.medicationName || "",
+              medicationType: data.medicationType || "",
+              dose: data.dose || "",
+              startDate: data.startDate || "",
+              endDate: data.endDate || "",
+              reminderType: data.reminderType || "",
+              taken: data.taken || false,
+              rating: data.rating || 0,
+            });
+
+            setEditedMedication({
+              medicationName: data.medicationName || "",
+              medicationType: data.medicationType || "",
+              dose: data.dose || "",
+              startDate: data.startDate || "",
+              endDate: data.endDate || "",
+              reminderType: data.reminderType || "",
+              rating: data.rating || 0,
+            });
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Error fetching document: ", error);
+        }
+      };
+
+      fetchMedication();
     }
   }, [id]);
+
+  const handleEdit = () => setIsEditing(true);
+
+  const handleSave = async () => {
+    if (id && medication) {
+      Alert.alert(
+        "Confirm Changes",
+        "Are you sure you want to save these changes?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Confirm",
+            onPress: async () => {
+              try {
+                const docRef = doc(db, "medication", id as string);
+                await updateDoc(docRef, editedMedication);
+                setMedication({ ...medication, ...editedMedication });
+                setIsEditing(false);
+                Alert.alert("Success", "Medication updated successfully!");
+                router.back();
+              } catch (error) {
+                console.error("Error updating document: ", error);
+                Alert.alert("Error", "Failed to update medication.");
+              }
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  const handleCancel = () => {
+    setEditedMedication({
+      medicationName: medication?.medicationName || "",
+      medicationType: medication?.medicationType || "",
+      dose: medication?.dose || "",
+      startDate: medication?.startDate || "",
+      endDate: medication?.endDate || "",
+      reminderType: medication?.reminderType || "",
+      rating: medication?.rating || 0,
+    });
+    setIsEditing(false);
+  };
 
   if (!id) return <Text>Loading...</Text>;
   if (!medication) return <Text>Loading medication details...</Text>;
 
-  const handleEdit = () => {
-    setIsEditing(!isEditing);
-  };
-
-  const handleSave = () => {
-    setMedication({ ...medication, ...editedMedication });
-    setIsEditing(false);
-  };
-
   return (
     <View style={styles.container}>
-<View style={styles.topHalfCircle}></View>
-{medication?.image && (
-  // <View style={styles.imageContainer}>
-    <Image
-      source={{ uri: medication.image }}
-      style={styles.medicationImage}
-      // resizeMode="cover"
-    />
-  // </View>
-)}
+      <View style={styles.topHalfCircle} />
 
-{/* Back Button */}
-<View style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}>
-  <MotiView
-    from={{ translateX: -10 }}
-    animate={{ translateX: 10 }}
-    transition={{
-      type: "timing",
-      duration: 800,
-      loop: true,
-      repeatReverse: true,
-      easing: Easing.inOut(Easing.ease),
-    }}
-    style={{
-      padding: 12, 
-    }}
-  >
-    <FontAwesome5
-      name="angle-double-left"
-      size={28}
-      color="#FFF"
-      onPress={() => router.back()}
-    />
-  </MotiView>
-</View>
+      <View style={{ position: "absolute", top: 70, left: 20, zIndex: 10 }}>
+        {!isEditing ? (
+          <MotiView
+            from={{ translateX: -10 }}
+            animate={{ translateX: 10 }}
+            transition={{
+              type: "timing",
+              duration: 800,
+              loop: true,
+              repeatReverse: true,
+              easing: Easing.inOut(Easing.ease),
+            }}
+            style={{ flexDirection: "row", alignItems: "center" }}
+          >
+            <FontAwesome5
+              name="angle-double-left"
+              size={30}
+              color="#FFF"
+              onPress={() => router.back()}
+            />
+            <Text style={styles.backText}>Back</Text>
+          </MotiView>
+        ) : (
+          <View
+            style={{
+              position: "absolute",
+              top: -25,
+              left: -1,
+              zIndex: 10,
+              alignItems: "center",
+            }}
+          >
+            <MaterialCommunityIcons
+              name="format-color-marker-cancel"
+              size={40}
+              color="#FFF"
+              onPress={handleCancel}
+            />
+            <Text style={styles.cancelText}>Cancel Change</Text>
+          </View>
+        )}
+      </View>
 
+      {!isEditing && (
+        <Text style={styles.title}>{medication.medicationName}</Text>
+      )}
 
-      <View 
-      style={styles.card}
-      >
-        <Text style={styles.title}>
+      <View style={styles.card}>
+        <View style={styles.detailsRow}>
+          <Text style={styles.detailsTitle}>Name: </Text>
           {isEditing ? (
             <TextInput
-              style={[styles.input, { textAlign: "center" }]}
-              value={editedMedication.name}
+              style={styles.input}
+              value={editedMedication.medicationName}
               onChangeText={(text) =>
-                setEditedMedication({ ...editedMedication, name: text })
+                setEditedMedication({
+                  ...editedMedication,
+                  medicationName: text,
+                })
               }
             />
           ) : (
-            medication.name
+            <Text style={styles.details}>{medication.medicationName}</Text>
           )}
-        </Text>
+        </View>
 
-        {["type", "dose", "time", "startDate", "endDate", "expiry"].map((field) => (
-          <View key={field} style={styles.detailsRow}>
-            <Text style={styles.detailsTitle}>
-              {field === "startDate"
-                ? "Start Date: "
-                : field === "endDate"
-                ? "End Date: "
-                : field[0].toUpperCase() + field.slice(1) + ": "}
-            </Text>
-            {isEditing ? (
-              <TextInput
-                style={styles.input}
-                value={(editedMedication[field as keyof typeof editedMedication] || "").toString()}
-                onChangeText={(text) =>
-                  setEditedMedication({ ...editedMedication, [field as keyof typeof editedMedication]: text })
-                }
-              />
-            ) : (
-              <Text style={styles.details}>{medication[field as keyof typeof medication]}</Text>
-            )}
-          </View>
-        ))}
+        {["medicationType", "dose", "startDate", "endDate", "reminderType"].map(
+          (field) => (
+            <View key={field} style={styles.detailsRow}>
+              <Text style={styles.detailsTitle}>
+                {field === "startDate"
+                  ? "Start Date: "
+                  : field === "endDate"
+                  ? "End Date: "
+                  : field === "reminderType"
+                  ? "Reminder Type: "
+                  : field === "medicationType"
+                  ? "Type: "
+                  : field[0].toUpperCase() + field.slice(1) + ": "}
+              </Text>
+              {isEditing ? (
+                <TextInput
+                  style={styles.input}
+                  value={(
+                    editedMedication[field as keyof typeof editedMedication] ||
+                    ""
+                  ).toString()}
+                  onChangeText={(text) =>
+                    setEditedMedication({ ...editedMedication, [field]: text })
+                  }
+                />
+              ) : (
+                <Text style={styles.details}>
+                  {medication[field as keyof typeof medication]}
+                </Text>
+              )}
+            </View>
+          )
+        )}
 
         <View style={styles.ratingContainer}>
           <Text style={styles.detailsTitle}>Rating: </Text>
@@ -190,21 +245,28 @@ const MedicationDetail = () => {
               size={20}
               color={editedMedication.rating >= star ? "#FFD700" : "#DDD"}
               onPress={() =>
-                isEditing && setEditedMedication({ ...editedMedication, rating: star })
+                isEditing &&
+                setEditedMedication({ ...editedMedication, rating: star })
               }
             />
           ))}
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.editButton}
-        onPress={isEditing ? handleSave : handleEdit}
-      >
-        <Text style={styles.editButtonText}>
-          {isEditing ? "Save Changes" : "Edit Medication"}
-        </Text>
-      </TouchableOpacity>
+      {!isEditing && (
+        <TouchableOpacity
+          style={[styles.saveButton, { backgroundColor: "#2265A2" }]}
+          onPress={handleEdit}
+        >
+          <Text style={styles.saveButtonText}>Edit Medication</Text>
+        </TouchableOpacity>
+      )}
+
+      {isEditing && (
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveButtonText}>Save Changes</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -214,7 +276,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFF",
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 250,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -223,115 +285,77 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: "50%",
+    height: "60%",
     backgroundColor: "#2265A2",
     borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
+    zIndex: 1,
   },
- backButton: {
-  position: "absolute",
-  top: 50,
-  left: 20,
-  padding: 12,
-  backgroundColor: "#000",
-  borderRadius: 30,
-  elevation: 5,
-  shadowColor: "#000",
-  shadowOpacity: 0.2,
-  shadowRadius: 4,
-  shadowOffset: { width: 0, height: 2 },
-},
-medicationImage: {
-  width: 420,
-  height: 420,
-  // right: -10,
-  bottom: -3,
-  // top: 0,
-
-
-},
-
-imageContainer: {
-  position: "absolute",
-  top: 80,
-  bottom: 90,
-  alignSelf: "center",
-  zIndex: 5,
-},
-
-
   title: {
     fontSize: 40,
     fontWeight: "700",
-    color: "#000",
-    textAlign: 'left',
-    marginBottom: 20,
+    color: "black",
+    marginTop: 220,
+    marginBottom: 2,
+    lineHeight: 45,
   },
   card: {
-    // backgroundColor: "#FFF",
     padding: 25,
     borderRadius: 15,
-    marginBottom: 10,
-    // shadowColor: "#000",
-    // shadowOpacity: 0.15,
-    top: -40,
-    // shadowRadius: 10,
-    // shadowOffset: { width: 0, height: 2 },
-    // elevation: 5,
+    marginBottom: 9,
     width: "99%",
     maxWidth: 350,
   },
   detailsRow: {
     flexDirection: "row",
-    // borderRadius: 10,
-    // borderWidth: 1,
-    // borderColor: "#ccc",
-    // justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 8,
+    alignItems: "center",
+  },
+  detailsTitle: {
+    fontSize: 16,
+    color: "#2265A2",
+    fontWeight: "600",
   },
   details: {
     fontSize: 16,
-    color: "#000",
-    lineHeight: 22,
-    marginLeft: 10,
-    fontWeight: 'bold',
-  },
-  detailsTitle: {
-    fontSize: 18,
-    color: "#2265A2",
-    lineHeight: 22,
-    fontWeight: 'bold',
+    color: "black",
   },
   input: {
-    height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingLeft: 10,
     fontSize: 16,
-    color: "#333",
-    width: "60%",
+    width: "70%",
+    height: 35,
+    backgroundColor: "#EEE",
+    padding: 8,
+    borderRadius: 25,
   },
   ratingContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    marginTop: 15,
+    marginBottom: 12,
   },
-  editButton: {
+  saveButton: {
     backgroundColor: "#2265A2",
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 30,
+    padding: 15,
+    borderRadius: 25,
+    marginTop: -30,
+    width: "80%",
     alignItems: "center",
-    justifyContent: "center",
-    // marginTop: 20,
-    elevation: 4,
-    top: -20,
   },
-  editButtonText: {
+  saveButtonText: {
     color: "#FFF",
-    fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  backText: {
+    color: "#FFF",
+    marginLeft: 5,
+    fontSize: 20,
+    fontWeight: "600",
+  },
+  cancelText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 5,
   },
 });
 
