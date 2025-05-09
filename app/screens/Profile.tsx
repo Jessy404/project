@@ -1,22 +1,71 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { auth, db } from "../../config/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { getAuth, signOut } from "firebase/auth";
 
 export default function Profile() {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const authInstance = getAuth();
 
-  const handleLogout = () => {
-    router.replace('/screens/Getstarted');
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = authInstance.currentUser;
+      if (user) {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+  
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          if (userData && typeof userData === 'object') {
+            setUserData(userData);
+          } else {
+            console.log('Invalid data format');
+            setUserData(null);      
+          }
+        } else {
+          console.log('No user data found');
+          setUserData(null);  
+        }
+      }
+      setLoading(false); 
+    };
+  
+    fetchUserData();
+  }, []);
+  
+  
+
+  const handleLogout = async () => {
+    try {
+      await signOut(authInstance);
+      router.replace('/screens/Getstarted');
+    } catch (error) {
+      console.log("Logout error:", error);
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.avatarContainer}>
         <Image
-          source={{ uri: 'https://i.pravatar.cc/150?img=12' }}
+          source={{ uri: 'https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg' }}
           style={styles.avatar}
         />
-        <Text style={styles.userName}>Soso</Text>
+        <Text style={styles.userName}>
+           {userData?.name || 'Not Available'}
+        </Text>
       </View>
 
       <TouchableOpacity style={styles.card} onPress={() => router.push('/screens/MyInfo')}>
@@ -30,10 +79,10 @@ export default function Profile() {
       <TouchableOpacity style={styles.card} onPress={() => router.push('/screens/challenge')}>
         <Text style={styles.cardText}>My Challenges</Text>
       </TouchableOpacity>
+
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
-  
     </View>
   );
 }
