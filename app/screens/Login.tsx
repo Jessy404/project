@@ -80,6 +80,12 @@ export default function LoginScreen() {
         Alert.alert('Missing Fields', 'Please enter both email and password');
         return;
       }
+
+
+      if (!email.endsWith('@gmail.com')) {
+        Alert.alert('Invalid Email', 'Email must end with @gmail.com');
+        return;
+    }
         setLoading(true);
 
         
