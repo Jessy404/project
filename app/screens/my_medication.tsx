@@ -16,6 +16,7 @@ type Medication = {
   endDate: string;
   reminderType: string;
   userEmail: string;
+  frequencyPerDay: number; // Added this property
   taken?: boolean;
   rating?: number;
 };
@@ -48,6 +49,7 @@ const MyMedication = () => {
             userEmail: data.userEmail,
             taken: data.taken !== undefined ? data.taken : false,
             rating: data.rating || 0,
+            frequencyPerDay: 0
           });
         }
       });
