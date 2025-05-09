@@ -1,14 +1,18 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useRouter } from "expo-router";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {auth, db} from "../../config/firebaseConfig"
-import {createUserWithEmailAndPassword} from "firebase/auth";
+import {createUserWithEmailAndPassword, browserSessionPersistence , sendPasswordResetEmail,signInWithCredential, GoogleAuthProvider} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import {userDetailContext} from "./../../context/userDetailContext"
 import { useContext } from 'react';
 import { Alert } from "react-native";
+import * as AuthSession from "expo-auth-session";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 export default function RegisterScreen() {
    const router = useRouter();
   const [name, setName] = useState("");
@@ -19,6 +23,7 @@ export default function RegisterScreen() {
   // const handleRegister = () => {
   //   router.replace("/(tabs)/home");
   // };
+    WebBrowser.maybeCompleteAuthSession();
 
   const createNewAccount = () => {
     createUserWithEmailAndPassword(auth, email, password)
@@ -36,8 +41,14 @@ export default function RegisterScreen() {
       });
   };
   
-  
-  // const saveUser = async (user: /*unresolved*/ any ) => {
+  const [request, response, promptAsync] = Google.useAuthRequest({
+          clientId: "1042740888608-5j1fklmvlev4vitrhot1bcr8nlm1h9sq.apps.googleusercontent.com",
+          androidClientId: "1042740888608-dc7fef2ol3lma2q4k1ni8j1mrmg7nf55.apps.googleusercontent.com",
+          webClientId: "1042740888608-5am9h15ckoag6jrftc1q9kvmv7prjl0c.apps.googleusercontent.com",
+          redirectUri: "https://auth.expo.io/@aya21/project",
+      });
+      
+  // const saveUser = async (user: /unresolved/ any ) => {
   //   await setDoc(doc(db, "users", user.uid), {
   //     name: user.fullName,
   //     email: user.email,
@@ -45,7 +56,7 @@ export default function RegisterScreen() {
   //     uid: user.uid
   //   });
   // };
-  const saveUser = async (user: /*unresolved*/ any, fullName: string) => {
+  const saveUser = async (user:  any, fullName: string) => {
 
     try {
       console.log("Saving user to Firestore:", {
@@ -72,14 +83,28 @@ export default function RegisterScreen() {
 
     // })
   };
+   useEffect(() => {
+          if (response?.type === "success") {
+              const { id_token } = response.params;
+            const credential = GoogleAuthProvider.credential(id_token);
+           
   
+            signInWithCredential(auth, credential)
+              .then(() => {
+                router.push('/(tabs)/home');
+              })
+              .catch((error) => {
+                Alert.alert("Login error", error.message);
+              });
+          }
+        }, [response]);
   return (
     <ImageBackground source={require("../../assets/images/blue.jpeg")} style={styles.background}>
        <KeyboardAvoidingView 
               behavior={Platform.OS === "ios" ? "padding" : "height"} 
               style={styles.container}
             >
-    
+     
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
       <Ionicons name="arrow-back" size={24} color="white" />
 </TouchableOpacity>
@@ -101,7 +126,7 @@ export default function RegisterScreen() {
         <Text style={styles.orText}>Or Sign up with</Text>
         <View style={styles.socialIcons}>
           <Ionicons name="logo-facebook" size={28} color="#3b5998" />
-          <Ionicons name="logo-google" size={28} color="#db4437" />
+           <TouchableOpacity onPress={() => promptAsync()}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => router.push("/Account/signin")}>
@@ -197,7 +222,6 @@ const styles = StyleSheet.create({
   },
   signinText: {
     color: "#777",
-    marginTop: 15,
-  },
+    marginTop: 15,
+  },
 });
-
