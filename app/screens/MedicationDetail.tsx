@@ -153,7 +153,7 @@ const MedicationDetail = () => {
             <FontAwesome5
               name="angle-double-left"
               size={30}
-              color="#FFF"
+              color="#FFD700" 
               onPress={() => router.back()}
             />
             <Text style={styles.backText}>Back</Text>
@@ -179,9 +179,13 @@ const MedicationDetail = () => {
         )}
       </View>
 
-      {!isEditing && (
-        <Text style={styles.title}>{medication.medicationName}</Text>
-      )}
+      
+{!isEditing && (
+  <Text style={[styles.title, { color: "#062654" }]}>
+    {medication.medicationName}
+  </Text>
+)}
+
 
       <View style={styles.card}>
         <View style={styles.detailsRow}>
@@ -255,7 +259,7 @@ const MedicationDetail = () => {
 
       {!isEditing && (
         <TouchableOpacity
-          style={[styles.saveButton, { backgroundColor: "#2265A2" }]}
+          style={[styles.saveButton, { backgroundColor: "#062654" }]}
           onPress={handleEdit}
         >
           <Text style={styles.saveButtonText}>Edit Medication</Text>
@@ -286,16 +290,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: "60%",
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
     borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
     zIndex: 1,
+    
   },
   title: {
-    fontSize: 40,
+    fontSize: 35,
     fontWeight: "700",
-    color: "black",
-    marginTop: 220,
+    color: "#062654", 
+    marginTop: 100, 
     marginBottom: 2,
     lineHeight: 45,
   },
@@ -308,32 +313,41 @@ const styles = StyleSheet.create({
   },
   detailsRow: {
     flexDirection: "row",
-    marginBottom: 8,
+    marginBottom: 15,
     alignItems: "center",
   },
   detailsTitle: {
-    fontSize: 16,
-    color: "#2265A2",
-    fontWeight: "600",
+    
+    fontSize: 18,
+    color: "#062654",
+    width: "35%",
+    fontWeight: "bold",
   },
   details: {
-    fontSize: 16,
+    fontSize: 17,
     color: "black",
+    width: "65%",
+    padding: 3,
   },
   input: {
     fontSize: 16,
     width: "70%",
     height: 35,
-    backgroundColor: "#EEE",
+    backgroundColor: "white",
     padding: 8,
     borderRadius: 25,
+    borderWidth: 0.5, 
+    borderColor: "#062654", 
+    
+    
+  
   },
   ratingContainer: {
     flexDirection: "row",
     marginBottom: 12,
   },
   saveButton: {
-    backgroundColor: "#2265A2",
+    backgroundColor: "#062654",
     padding: 15,
     borderRadius: 25,
     marginTop: -30,
@@ -352,7 +366,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   cancelText: {
-    color: "#FFF",
+    color: "#FFD700",
     fontSize: 14,
     fontWeight: "600",
     marginTop: 5,
