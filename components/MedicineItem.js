@@ -60,28 +60,28 @@ const MedicineItem = ({
 
         <View style={styles.medicineInfoRow}>
           <MaterialCommunityIcons name={getMedicationIcon()} size={18} color={iconColor} />
-          <Text style={styles.medicineInfoText}>النوع: {medicationType}</Text>
+          <Text style={styles.medicineInfoText}>type: {medicationType}</Text>
         </View>
 
         <View style={styles.medicineInfoRow}>
           <MaterialCommunityIcons name="numeric" size={18} color={iconColor} />
-          <Text style={styles.medicineInfoText}>الجرعة: {dose}</Text>
+          <Text style={styles.medicineInfoText}>dose: {dose}</Text>
         </View>
 
         <View style={styles.medicineInfoRow}>
           <MaterialCommunityIcons name="repeat" size={18} color={iconColor} />
-          <Text style={styles.medicineInfoText}>الجرعات اليومية: {dosesPerDay}</Text>
+          <Text style={styles.medicineInfoText}>dosesPerDay : {dosesPerDay}</Text>
         </View>
 
         <View style={styles.medicineInfoRow}>
           <MaterialCommunityIcons name={getTimeIcon()} size={18} color={iconColor} />
-          <Text style={styles.medicineInfoText}>وقت التناول: {whenToTake}</Text>
+          <Text style={styles.medicineInfoText}>whenToTake : {whenToTake}</Text>
         </View>
 
         {reminderType && (
           <View style={styles.medicineInfoRow}>
             <MaterialCommunityIcons name="bell" size={18} color={iconColor} />
-            <Text style={styles.medicineInfoText}>نوع التذكير: {reminderType}</Text>
+            <Text style={styles.medicineInfoText}> reminderType: {reminderType}</Text>
           </View>
         )}
 
@@ -97,7 +97,7 @@ const MedicineItem = ({
             ))}
           </View>
           {taken && (
-            <Text style={styles.takenText}>تم التناول ✓</Text>
+            <Text style={styles.takenText}> Done ✓</Text>
           )}
         </View>
       </View>
