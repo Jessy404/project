@@ -21,7 +21,6 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
   const {userDetail ,setUserDetail} =useContext(userDetailContext);
 
-  
   // const handleRegister = () => {
   //   router.replace("/(tabs)/home");
   // };
@@ -127,7 +126,7 @@ export default function RegisterScreen() {
 
         <Text style={styles.orText}>Or Sign up with</Text>
         <View style={styles.socialIcons}>
-        
+
            <TouchableOpacity onPress={() => promptAsync()}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
         </View>
 

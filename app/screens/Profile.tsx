@@ -4,10 +4,16 @@ import { useRouter } from 'expo-router';
 import { auth, db } from "../../config/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { getAuth, signOut } from "firebase/auth";
-import { FontAwesome5, MaterialIcons, Ionicons, Feather } from '@expo/vector-icons';
+import { FontAwesome5, MaterialIcons, Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function Profile() {
-  const [userData, setUserData] = useState(null);
+  interface UserData {
+    name?: string;
+    email?: string;
+    // Add other fields as needed
+  }
+
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const authInstance = getAuth();
@@ -55,7 +61,7 @@ export default function Profile() {
     );
   }
 
-  const RenderOption = ({ icon, text, onPress, color = "#10439F" }) => (
+  const RenderOption: React.FC<{ icon: React.ReactElement; text: string; onPress: () => void; color?: string }> = ({ icon, text, onPress, color = "#10439F" }) => (
     <TouchableOpacity style={styles.optionRow} onPress={onPress}>
       <View style={styles.optionContent}>
         {React.cloneElement(icon, { color })}
@@ -84,13 +90,18 @@ export default function Profile() {
       />
 
       <RenderOption
-        icon={<FontAwesome5 name="pills" size={20} />}
+        icon={<FontAwesome5 name="capsules" size={20} />}
         text="My Medications"
         onPress={() => router.push('/screens/my_medication')}
       />
 
       <RenderOption
-        icon={<Ionicons name="trophy-outline" size={22} />}
+        icon={
+          <MaterialCommunityIcons
+            name={"lightning-bolt"}
+            color={"#062654"}
+            size={32}
+          />}
         text="My Challenges"
         onPress={() => router.push('/screens/challenge')}
       />
@@ -106,6 +117,11 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   wrapper: {
     flex: 1,
     backgroundColor: '#FFF',
@@ -131,7 +147,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     marginTop: 10,
-    color: '#10439F',
+    color: '#062654',
   },
   email: {
     fontSize: 14,

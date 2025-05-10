@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { db } from "../../config/firebaseConfig";
 import { getAuth } from "firebase/auth";
@@ -13,9 +13,11 @@ const MyInfo = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [age, setAge] = useState("");
+  const [profileImage, setProfileImage] = useState(null);   
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
 
-  
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
@@ -26,12 +28,13 @@ const MyInfo = () => {
           setName(data.name || "");
           setEmail(data.email || "");
           setAge(data.age || "");
+          setProfileImage(data.photoURL || 'https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg'); 
         }
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleSave = async () => {
     if (user) {
@@ -40,9 +43,11 @@ const MyInfo = () => {
         name,
         email,
         age,
+        photoURL: profileImage, 
       });
-      console.log('Saved:', { name, email, age });
-      router.back(); 
+      console.log('Saved:', { name, email, age, profileImage });
+      setIsEditing(false);
+      setIsSaved(true);
     }
   };
 
@@ -56,46 +61,81 @@ const MyInfo = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Edit My Info</Text>
+      <View style={{ marginBottom: 20 }} /> 
+      <Text style={styles.title}>My Info</Text>
+
+      <View style={styles.profileContainer}>
+        <Image
+          source={{ uri: profileImage }}
+          style={styles.profileImage}
+        />
+        <Text style={styles.changePhotoText}>Profile Picture</Text>
+      </View>
 
       <View style={styles.card}>
         <Text style={styles.label}>Name</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-        />
+        {isEditing ? (
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+          />
+        ) : (
+          <Text style={styles.value}>{name}</Text>
+        )}
 
         <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-        />
+        {isEditing ? (
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+        ) : (
+          <Text style={styles.value}>{email}</Text>
+        )}
 
         <Text style={styles.label}>Age</Text>
-        <TextInput
-          style={styles.input}
-          value={age}
-          onChangeText={setAge}
-          keyboardType="numeric"
-        />
+        {isEditing ? (
+          <TextInput
+            style={styles.input}
+            value={age}
+            onChangeText={setAge}
+            keyboardType="numeric"
+          />
+        ) : (
+          <Text style={styles.value}>{age}</Text>
+        )}
+
       </View>
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveText}>Save Changes</Text>
-      </TouchableOpacity>
+      {isEditing ? (
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveText}>Save Changes</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
+          <Text style={styles.editText}>Edit</Text>
+        </TouchableOpacity>
+      )}
+
+      {isSaved && (
+        <View style={styles.successMessage}>
+          <Text style={styles.successText}>Changes saved successfully!</Text>
+        </View>
+      )}
     </View>
   );
 };
+
 
 export default MyInfo;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2265A2',
+    backgroundColor: '#FFF',
     padding: 20,
   },
   centered: {
@@ -107,9 +147,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#062654',  
     textAlign: 'center',
     marginBottom: 20,
+  },
+  profileContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#062654', 
+    marginBottom: 10,
+  },
+  changePhotoText: {
+    fontSize: 14,
+    color: '#062654', 
   },
   card: {
     backgroundColor: '#FFF',
@@ -120,7 +176,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#062654', 
     marginTop: 10,
   },
   input: {
@@ -131,8 +187,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  value: {
+    backgroundColor: '#F0F4F8',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 5,
+    fontSize: 16,
+    color: '#333',
+  },
   saveButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#062654', 
     paddingVertical: 15,
     borderRadius: 20,
     marginTop: 30,
@@ -142,5 +206,28 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  editButton: {
+    backgroundColor: '#062654', 
+    paddingVertical: 15,
+    borderRadius: 20,
+    marginTop: 30,
+    alignItems: 'center',
+  },
+  editText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  successMessage: {
+    backgroundColor: '#28a745',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  successText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
