@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { doc, setDoc, getDoc, getDocs, collection, updateDoc } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 import { Ionicons } from '@expo/vector-icons';
 import { getAuth } from "firebase/auth";
-
+import React = require("react");
 interface Challenge {
   id: string;
   title: string;

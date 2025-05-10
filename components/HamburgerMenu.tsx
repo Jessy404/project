@@ -1,28 +1,38 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const NotificationModal = () => {
+const HamburgerMenu = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const [medications, setMedications] = useState([
 { id: 1, name: 'Alphintern', dose: '1 tablet', time: 'Today at 08:00 am' },
+
   { id: 2, name: 'Vitamin C', dose: '1 tablet (1000mg)', time: 'Today at 08:00 am' },
+
   { id: 3, name: 'Panadol Extra', dose: '2 tablets (500mg)', time: 'Today at 11:59 pm' },
+
   { id: 4, name: 'Alphintern', dose: '1 tablet', time: 'Yesterday at 08:00 am' },
+
   { id: 5, name: 'Vitamin C', dose: '1 tablet (1000mg)', time: 'Yesterday at 10:30 am' },
+
   { id: 6, name: 'Amoxicillin', dose: '1 capsule (500mg)', time: 'Today at 02:00 pm' },
+
   { id: 7, name: 'Omeprazole', dose: '1 capsule (20mg)', time: 'Today at 07:00 am' },
+
   { id: 8, name: 'Aspirin', dose: '1 tablet (81mg)', time: 'Yesterday at 09:00 pm' },
+
   { id: 9, name: 'Cetirizine', dose: '1 tablet (10mg)', time: 'Today at 09:30 pm' },
+  
   { id: 10, name: 'Loratadine', dose: '1 tablet (10mg)', time: 'Yesterday at 07:15 pm' }
   ]);
 
-  const markAsTaken = (id) => {
+  const markAsTaken = (id: number) => {
     setMedications(prev => prev.filter(item => item.id !== id));
   };
 
-  const markAsSkipped = (id) => {
+  const markAsSkipped = (id: number) => {
     setMedications(prev => prev.filter(item => item.id !== id));
   };
 
@@ -200,4 +210,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NotificationModal;
+export default HamburgerMenu;

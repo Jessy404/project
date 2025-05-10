@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  {  useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -16,6 +16,7 @@ import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-ico
 import { router } from "expo-router";
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, getDoc, collection, query, getDocs } from 'firebase/firestore';
+import React = require("react");
 
 interface CalendarProps {
     onSelectDate: (date: number) => void;
@@ -44,7 +45,7 @@ interface ChallengeItemType {
     progress: number;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
+const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }: CalendarProps) => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const dates = Array.from({ length: 31 }, (_, i) => i + 1);
 
@@ -74,7 +75,8 @@ const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
     );
 };
 
-const MedicineItem: React.FC<{ item: MedicineData }> = ({ item }) => {
+const MedicineItem: React.FC<{ item: MedicineData }> = (props: { item: MedicineData }) => {
+    const { item } = props;
     const getIconColor = () => {
         switch(item.medicationType.toLowerCase()) {
             case 'tablet': return '#2265A2';
@@ -128,7 +130,7 @@ const MedicineItem: React.FC<{ item: MedicineData }> = ({ item }) => {
     );
 };
 
-const ChallengeItem: React.FC<{ item: ChallengeItemType }> = ({ item }) => (
+const ChallengeItem: React.FC<{ item: ChallengeItemType }> = ({ item }: { item: ChallengeItemType }) => (
     <View style={styles.challengeContainer}>
         <View style={[styles.challengeIconContainer, { backgroundColor: `${item.color}20` }]}>
             <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />

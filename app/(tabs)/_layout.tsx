@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import * as React from 'react';
 import { View, Image, Text } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { HapticTab } from '@/components/HapticTab';
@@ -38,7 +38,7 @@ export default function TabLayout() {
         name="home"
         options={{
           tabBarLabel: "Home",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View style={{ alignItems: 'center' }}>
               <AntDesign name="home" color={color}  size={focused ? 28 : 20} />
             </View>
@@ -51,7 +51,7 @@ export default function TabLayout() {
         name="new"
         options={{
           tabBarLabel: "New",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View style={{ alignItems: 'center' }}>
               <MaterialIcons
                 name={focused ? "add-circle" : "add-circle-outline"}
@@ -68,7 +68,7 @@ export default function TabLayout() {
         name="challenge"
         options={{
           tabBarLabel: "Challenge",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View style={{ alignItems: 'center' }}>
               <MaterialCommunityIcons
                 name={focused ? "lightning-bolt" : "lightning-bolt-outline"}
@@ -84,7 +84,7 @@ export default function TabLayout() {
         name="ai"
         options={{
           tabBarLabel: "AI",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View style={{ alignItems: 'center' }}>
           
               <View>
@@ -113,7 +113,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           tabBarLabel: "Profile",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
             <View style={{ alignItems: 'center' }}>
               <Image 
                 source={{ 
