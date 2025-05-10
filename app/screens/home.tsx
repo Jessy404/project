@@ -9,28 +9,43 @@ import {
     useColorScheme,
     Platform,
     StatusBar,
+    ActivityIndicator
 } from "react-native";
 import HamburgerMenu from "../../components/HamburgerMenu";
-import { Ionicons, MaterialCommunityIcons, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { MotiView } from "moti";
-import { Easing } from "react-native-reanimated";
-
 import { auth, db } from '../../config/firebaseConfig';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { useContext } from 'react';
-import { userDetailContext } from "../../context/userDetailContext";
-import MedicineItem from "../../components/MedicineItem"; 
+import { doc, getDoc, collection, query, getDocs } from 'firebase/firestore';
 
 interface CalendarProps {
     onSelectDate: (date: number) => void;
     selected: number;
 }
 
+interface MedicineData {
+    id: string;
+    medicationName: string;
+    medicationType: string;
+    dose: string;
+    dosesPerDay: string;
+    whenToTake: string;
+    image?: string;
+    taken?: boolean;
+    startDate?: string;
+    endDate?: string;
+    rating?: number;
+}
+
+interface ChallengeItemType {
+    id: string;
+    title: string;
+    icon: string;
+    color: string;
+    progress: number;
+}
+
 const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
-    const days = Array.from({ length: 31 }, (_, i) =>
-        ["THU", "FRI", "SAT", "SUN", "MON", "TUE", "WED"][i % 7]
-    );
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const dates = Array.from({ length: 31 }, (_, i) => i + 1);
 
     return (
@@ -41,10 +56,7 @@ const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
             renderItem={({ item: date, index }) => (
                 <TouchableOpacity
                     style={[styles.dayContainer, selected === date && styles.selectedDay]}
-                    onPress={() => {
-                        console.log("Date selected in Calendar:", date);
-                        onSelectDate(date);
-                    }}
+                    onPress={() => onSelectDate(date)}
                 >
                     <Text style={[styles.dayText, selected === date && styles.selectedDayText]}>
                         {days[index % 7]}
@@ -62,11 +74,61 @@ const Calendar: React.FC<CalendarProps> = ({ onSelectDate, selected }) => {
     );
 };
 
-interface ChallengeItemProps {
-    item: typeof challenges[0];
-}
+const MedicineItem: React.FC<{ item: MedicineData }> = ({ item }) => {
+    const getIconColor = () => {
+        switch(item.medicationType.toLowerCase()) {
+            case 'tablet': return '#2265A2';
+            case 'syrup': return '#4CAF50';
+            case 'injection': return '#FF5722';
+            case 'capsule': return '#FF9800';
+            default: return '#2265A2';
+        }
+    };
 
-const ChallengeItem: React.FC<ChallengeItemProps> = ({ item }) => (
+    const iconColor = getIconColor();
+
+    return (
+        <View style={styles.challengeContainer}>
+            <View style={[styles.challengeIconContainer, { backgroundColor: `${iconColor}20` }]}>
+                <MaterialCommunityIcons 
+                    name={item.medicationType.toLowerCase() === 'syrup' ? 'cup' : 'pill'} 
+                    size={24} 
+                    color={iconColor} 
+                />
+            </View>
+            
+            <Text style={styles.challengeTitle} numberOfLines={1}>
+                {item.medicationName}
+            </Text>
+            
+            <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { 
+                    width: item.taken ? '100%' : '50%', 
+                    backgroundColor: iconColor 
+                }]} />
+            </View>
+            
+            <View style={styles.medicineDetails}>
+                <View style={styles.detailRow}>
+                    <MaterialCommunityIcons name="counter" size={14} color="#FFFFFF" />
+                    <Text style={styles.detailText}>{item.dose}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                    <MaterialCommunityIcons name="clock-outline" size={14} color="#FFFFFF" />
+                    <Text style={styles.detailText}>{item.whenToTake}</Text>
+                </View>
+            </View>
+            
+            {item.taken && (
+                <View style={styles.takenBadge}>
+                    <Text style={styles.takenText}>Taken</Text>
+                </View>
+            )}
+        </View>
+    );
+};
+
+const ChallengeItem: React.FC<{ item: ChallengeItemType }> = ({ item }) => (
     <View style={styles.challengeContainer}>
         <View style={[styles.challengeIconContainer, { backgroundColor: `${item.color}20` }]}>
             <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />
@@ -79,294 +141,261 @@ const ChallengeItem: React.FC<ChallengeItemProps> = ({ item }) => (
     </View>
 );
 
-// Define challenges array
-const challenges = [
-    { id: '1', title: 'Drink Water', icon: 'water', color: '#4CAF50', progress: 75 },
-    { id: '2', title: 'Walk 10,000 Steps', icon: 'walk', color: '#FF9800', progress: 50 },
-    { id: '3', title: 'Sleep 8 Hours', icon: 'sleep', color: '#2196F3', progress: 90 },
-];
-
-// Main Screen
-const HomeScreen = () => {
-    const [loggedInUserName, setLoggedInUserName] = useState<string | null>('Guest');
-    const [loggedInUserImage, setLoggedInUserImage] = useState<string | null>("https://via.placeholder.com/150");
-    const [selectedDate, setSelectedDate] = useState(new Date().getDate());
-    const [currentHour, setCurrentHour] = useState(new Date().getHours());
+const HomeScreen: React.FC = () => {
+    const [loggedInUserName, setLoggedInUserName] = useState<string>('Guest');
+    const [loggedInUserImage, setLoggedInUserImage] = useState<string>("https://via.placeholder.com/150");
+    const [selectedDate, setSelectedDate] = useState<number>(new Date().getDate());
+    const [currentHour, setCurrentHour] = useState<number>(new Date().getHours());
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === "dark";
-    const [currentMonth, setCurrentMonth] = useState(new Date().toLocaleString('default', { month: 'long' }));
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    const [medicines, setMedicines] = useState<any[]>([]); // حالة لتخزين الأدوية
+    const [currentMonth, setCurrentMonth] = useState<string>(new Date().toLocaleString('default', { month: 'long' }));
+    const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
+    const [medicines, setMedicines] = useState<MedicineData[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
 
-useEffect(() => {
-    console.log("currentUser", auth.currentUser);
-    console.log("Firestore:", db);
-
-    const fetchUserData = async () => {
-        const user = auth.currentUser;
-        if (user) {
-            try {
-                const userRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userRef);
-
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    console.log("User data fetched from Firestore:", userData);
-
-                
-                    if (userData?.someDateField) {
-                        const date = new Date(userData.someDateField);
-                        if (isNaN(date.getTime())) {
-                            console.error("Invalid date detected:", userData.someDateField);
-                        }
-                    }
-
-                    setLoggedInUserName(userData?.name || 'Guest');
-                    setLoggedInUserImage(userData?.photoURL || "https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg");
-                } else {
-                    console.log("User document not found in Firestore for UID:", user.uid);
-                }
-            } catch (error) {
-                console.error("Error during fetching user data from Firestore:", error);
-            }
-        } else {
-            console.log("No user is currently logged in.");
-        }
-    };
-
-    fetchUserData();
-
-    const unsubscribe = auth.onAuthStateChanged(user => {
-        if (user) {
-            fetchUserData();
-        }
-    });
-
-    return () => unsubscribe();
-}, []);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentHour(new Date().getHours());
-        }, 60000);
-        return () => clearInterval(interval);
-    }, []);
-
-    // دالة لجلب الأدوية من Firestore بناءً على التاريخ المحدد
-    const fetchMedicinesForDate = async (date: number) => {
-        const user = auth.currentUser;
-        if (user) {
-            try {
-                const medicinesRef = collection(db, "users", user.uid, "medicines");
-
-                // الحصول على رقم الشهر (0-11)
-                const monthNumber = new Date(Date.parse(currentMonth + " 1, " + currentYear)).getMonth();
-
-                const startDate = new Date(currentYear, monthNumber, date, 0, 0, 0, 0);
-                const endDate = new Date(currentYear, monthNumber, date, 23, 59, 59, 999);
-
-                console.log("startDate:", startDate);
-                console.log("endDate:", endDate);
-
-                const q = query(medicinesRef,
-                    where('scheduledDate', '>=', startDate),
-                    where('scheduledDate', '<=', endDate)
-                );
-
-                const querySnapshot = await getDocs(q);
-                const medicinesArray: any[] = [];
-                querySnapshot.forEach((doc) => {
-                    medicinesArray.push({ id: doc.id, ...doc.data() });
-                });
-                console.log("Medicines fetched for date:", date, medicinesArray);
-                setMedicines(medicinesArray);
-            } catch (error) {
-                console.error("Error fetching medicines:", error);
-                setMedicines([]);
-            }
-        } else {
-            setMedicines([]);
-        }
-    };
-
-    useEffect(() => {
-        console.log("Value of selectedDate before fetching:", selectedDate);
-        fetchMedicinesForDate(selectedDate);
-    }, [selectedDate, currentMonth, currentYear]); 
-    const greeting = currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening";
-
-    const sections = [
-        { type: 'header', id: 'header' },
-        { type: 'calendar', id: 'calendar' },
-        { type: 'medications', id: 'medications', data: medicines }, 
-        { type: 'challenges', id: 'challenges', data: challenges },
-        { type: 'stats', id: 'stats' }
+    const challenges: ChallengeItemType[] = [
+        { id: '1', title: 'Drink Water', icon: 'water', color: '#4CAF50', progress: 75 },
+        { id: '2', title: 'Walk 10,000 Steps', icon: 'walk', color: '#FF9800', progress: 50 },
+        { id: '3', title: 'Sleep 8 Hours', icon: 'sleep', color: '#2196F3', progress: 90 },
     ];
 
-    const renderItem = ({ item }: { item: typeof sections[0] }) => {
-        switch (item.type) {
-            case 'header':
-                return (
-                    <View style={styles.headerContainer}>
-                        <View style={styles.headerContent}>
-                            <View style={styles.userInfo}>
-                                <Image source={{ uri: loggedInUserImage || "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg" }} style={styles.userImage} />
-                                <View>
-                                    <Text style={[styles.greetingText, isDarkMode && styles.darkText]}>{greeting}</Text>
-                                    <Text style={[styles.userName, isDarkMode && styles.darkText]}>{loggedInUserName}</Text>
-                                </View>
-                            </View>
-                            <View style={styles.headerActions}>
-                                <TouchableOpacity onPress={() => router.push("/screens/AddNewMedication")}>
-                                    <Ionicons name="add-circle-outline" size={35} color={isDarkMode ? "#fff" : "#062654"} />
-                                </TouchableOpacity>
-                                <HamburgerMenu />
-                            </View>
-                        </View>
-                        <Text style={[styles.headerSubText, isDarkMode && styles.darkSubText]}>
-                            Stay on track with your health goals!
-                        </Text>
-                    </View>
-                );
-            case 'calendar':
-                return (
-                    <View style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Calendar</Text>
-                            <Text style={[styles.monthText, isDarkMode && styles.darkSubText]}>{`${currentMonth} ${currentYear}`}</Text>
-                        </View>
-                        <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
-                    </View>
-                );
-            case 'medications':
-                return (
-                    <View style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Today's Medication</Text>
-                            <TouchableOpacity onPress={() => router.push('/(tabs)/new')}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Text style={styles.viewAllText}>View All</Text>
-                                    <MotiView
-                                        from={{ translateX: -10 }}
-                                        animate={{ translateX: 10 }}
-                                        transition={{
-                                            type: "timing",
-                                            duration: 800,
-                                            loop: true,
-                                            repeatReverse: true,
-                                            easing: Easing.inOut(Easing.ease),
-                                        }}
-                                        style={{ padding: 8 }}
-                                    >
-                                        <FontAwesome5
-                                            name="angle-double-right"
-                                            size={24}
-                                            color="#FFD700"
-                                        />
-                                    </MotiView>
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-                        <FlatList
-                            data={item.data} 
-                            horizontal
-                            keyExtractor={(med) => med.id}
-                            renderItem={({ item: med }) => (
-                                <MedicineItem
-                                    item={med}
-                                />
-                            )}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.medicineList}
-                        />
-                    </View>
-                );
-            case 'challenges':
-                return (
-                    <View style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Health Challenges</Text>
-                            <TouchableOpacity onPress={() => router.push('/(tabs)/challenge')}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Text style={styles.viewAllText}>View All</Text>
-                                    <MotiView
-                                        from={{ translateX: -10 }}
-                                        animate={{ translateX: 10 }}
-                                        transition={{
-                                            type: "timing",
-                                            duration: 800,
-                                            loop: true,
-                                            repeatReverse: true,
-                                            easing: Easing.inOut(Easing.ease),
-                                        }}
-                                        style={{ padding: 8 }}
-                                    >
-                                        <FontAwesome5
-                                            name="angle-double-right"
-                                            size={24}
-                                            color="#FFD700"
-                                        />
-                                    </MotiView>
-                                </View>
-                            </TouchableOpacity>
-                        </View>
-                        <FlatList
-                            data={item.data}
-                            horizontal
-                            keyExtractor={(challenge) => challenge.id}
-                            renderItem={({ item }) => <ChallengeItem item={item} />}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.challengeList}
-                        />
-                    </View>
-                );
-            case 'stats':
-                return (
-                    <View style={[styles.statsContainer, isDarkMode ? styles.darkStatsContainer : styles.lightStatsContainer]}>
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>10</Text>
-                            <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Medications</Text>
-                        </View>
-                        <View style={styles.statSeparator} />
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>10</Text>
-                            <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Completed</Text>
-                        </View>
-                        <View style={styles.statSeparator} />
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>0</Text>
-                            <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Pending</Text>
-                        </View>
-                    </View>
-                );
-            default:
-                return null;
-        }
+    // Helper function to parse mm/dd/yyyy dates
+    const parseFirestoreDate = (dateStr: string): Date => {
+        const [month, day, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
     };
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                try {
+                    const userRef = doc(db, "users", user.uid);
+                    const userDoc = await getDoc(userRef);
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        setLoggedInUserName(userData?.name || 'Guest');
+                        setLoggedInUserImage(userData?.photoURL || "https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg");
+                    }
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                }
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
+  const fetchMedicinesForDate = async (day: number) => {
+    setLoading(true);
+    setTimeout(() => {
+        // إنشاء مصفوفة الأدوية بناءً على اليوم المحدد
+        const mockMedicines: MedicineData[] = [];
+        
+        // دواء أساسي لكل الأيام
+        mockMedicines.push({
+            id: "vitamin-d-" + day,
+            medicationName: "Vitamin D",
+            medicationType: "Drops",
+            dose: "1000 IU",
+            dosesPerDay: "1",
+            whenToTake: "Morning",
+            startDate: "05/01/2025",
+            endDate: "05/31/2025",
+            taken: day % 3 !== 0, // يتم تناوله كل يومين (لم يتم تناوله كل 3 أيام)
+            rating: 4
+        });
+
+        // دواء إضافي من 10 إلى 20 مايو
+        if (day >= 10 && day <= 20) {
+            mockMedicines.push({
+                id: "pain-reliever-" + day,
+                medicationName: "Ibuprofen",
+                medicationType: "Tablet",
+                dose: "200 mg",
+                dosesPerDay: "2",
+                whenToTake: "After Meal",
+                startDate: "05/10/2025",
+                endDate: "05/20/2025",
+                taken: day % 2 === 0, // يتم تناوله كل يومين
+                rating: 3
+            });
+        }
+
+        // دواء آخر من 15 مايو إلى نهاية الشهر
+        if (day >= 15) {
+            mockMedicines.push({
+                id: "antibiotic-" + day,
+                medicationName: "Amoxicillin",
+                medicationType: "Capsule",
+                dose: "500 mg",
+                dosesPerDay: "3",
+                whenToTake: "Every 8 Hours",
+                startDate: "05/15/2025",
+                endDate: "05/31/2025",
+                taken: true, // يتم تناوله بانتظام
+                rating: 5
+            });
+        }
+
+        // دواء إضافي في أيام محددة (يوم 5، 10، 15، 20، 25، 30)
+        // if ([5, 10, 15, 20, 25, 30].includes(day)) {
+        //     mockMedicines.push({
+        //         id: "special-med-" + day,
+        //         medicationName: "Multivitamin",
+        //         medicationType: "Tablet",
+        //         dose: "1 tablet",
+        //         dosesPerDay: "1",
+        //         whenToTake: "Evening",
+        //         startDate: "05/01/2025",
+        //         endDate: "05/31/2025",
+        //         taken: false, // لم يتم تناوله بعد
+        //         rating: 4
+        //     });
+        // }
+
+        setMedicines(mockMedicines);
+        setLoading(false);
+    }, 500);
+};
+    useEffect(() => {
+        const today = new Date();
+        setCurrentMonth(today.toLocaleString('default', { month: 'long' }));
+        setCurrentYear(today.getFullYear());
+        fetchMedicinesForDate(today.getDate());
+    }, []);
+
+    useEffect(() => {
+        fetchMedicinesForDate(selectedDate);
+    }, [selectedDate]);
+
+    const renderMedicationsSection = () => (
+        <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>
+                    {selectedDate === new Date().getDate() ? "Today's Medication" : "Medication"}
+                </Text>
+                <TouchableOpacity onPress={() => router.push({ pathname: "/screens/my_medication" })}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={styles.viewAllText}>View All</Text>
+                        <FontAwesome5 name="angle-double-right" size={24} color="#FFD700" />
+                    </View>
+                </TouchableOpacity>
+            </View>
+            
+            {loading ? (
+                <ActivityIndicator size="large" color="#FFD700" />
+            ) : medicines.length > 0 ? (
+                <FlatList
+                    data={medicines}
+                    horizontal
+                    keyExtractor={(med) => med.id}
+                    renderItem={({ item }) => <MedicineItem item={item} />}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.challengeList}
+                />
+            ) : (
+                <View style={styles.noMedicationsContainer}>
+                    <MaterialCommunityIcons 
+                        name="pill" 
+                        size={40} 
+                        color={isDarkMode ? "#555" : "#999"} 
+                    />
+                    <Text style={[styles.noMedicationsText, isDarkMode && styles.darkText]}>
+                        No medications for {selectedDate} {currentMonth}
+                    </Text>
+                </View>
+            )}
+        </View>
+    );
 
     return (
         <View style={[styles.container, isDarkMode && styles.darkContainer]}>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={isDarkMode ? '#121212' : '#FFFFFF'} />
-            <FlatList
-                data={sections}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                contentContainerStyle={styles.contentContainer}
-                showsVerticalScrollIndicator={false}
-            />
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            
+            {/* Header */}
+            <View style={styles.headerContainer}>
+                <View style={styles.headerContent}>
+                    <View style={styles.userInfo}>
+                        <Image source={{ uri: loggedInUserImage }} style={styles.userImage} />
+                        <View>
+                            <Text style={[styles.greetingText, isDarkMode && styles.darkText]}>
+                                {currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening"}
+                            </Text>
+                            <Text style={[styles.userName, isDarkMode && styles.darkText]}>{loggedInUserName}</Text>
+                        </View>
+                    </View>
+                    <View style={styles.headerActions}>
+                        <TouchableOpacity onPress={() => router.push("/(tabs)/add-medication" as any)}>
+                            <Ionicons name="add-circle-outline" size={35} color={isDarkMode ? "#fff" : "#062654"} />
+                        </TouchableOpacity>
+                        <HamburgerMenu />
+                    </View>
+                </View>
+                <Text style={[styles.headerSubText, isDarkMode && styles.darkSubText]}>
+                    Stay on track with your health goals!
+                </Text>
+            </View>
+            
+            {/* Calendar */}
+            <View style={styles.sectionContainer}>
+                <View style={styles.sectionHeader}>
+                    <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Calendar</Text>
+                    <Text style={[styles.monthText, isDarkMode && styles.darkSubText]}>
+                        {`${currentMonth} ${currentYear}`}
+                    </Text>
+                </View>
+                <Calendar onSelectDate={setSelectedDate} selected={selectedDate} />
+            </View>
+            
+            {/* Medications */}
+            {renderMedicationsSection()}
+            
+            {/* Challenges */}
+            <View style={styles.sectionContainer}>
+                <View style={styles.sectionHeader}>
+                    <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>Health Challenges</Text>
+                    <TouchableOpacity onPress={() => router.push({ pathname: "/screens/challenge" })}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Text style={styles.viewAllText}>View All</Text>
+                            <FontAwesome5 name="angle-double-right" size={24} color="#FFD700" />
+                        </View>
+                    </TouchableOpacity>
+                </View>
+                <FlatList
+                    data={challenges}
+                    horizontal
+                    keyExtractor={(challenge) => challenge.id}
+                    renderItem={({ item }) => <ChallengeItem item={item} />}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.challengeList}
+                />
+            </View>
+            
+            {/* Stats */}
+            <View style={[styles.statsContainer, isDarkMode ? styles.darkStatsContainer : styles.lightStatsContainer]}>
+                <View style={styles.statItem}>
+                    <Text style={styles.statValue}>{medicines.length}</Text>
+                    <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Medications</Text>
+                </View>
+                <View style={styles.statSeparator} />
+                <View style={styles.statItem}>
+                    <Text style={styles.statValue}>{medicines.filter(m => m.taken).length}</Text>
+                    <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Taken</Text>
+                </View>
+                <View style={styles.statSeparator} />
+                <View style={styles.statItem}>
+                    <Text style={styles.statValue}>{medicines.filter(m => !m.taken).length}</Text>
+                    <Text style={[styles.statLabel, isDarkMode && styles.darkSubText]}>Pending</Text>
+                </View>
+            </View>
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
-    },
-    contentContainer: {
-        paddingBottom: 24,
-    },
-    lightContainer: {
         backgroundColor: "#FFFFFF",
     },
     darkContainer: {
@@ -376,23 +405,13 @@ const styles = StyleSheet.create({
         padding: 14,
         paddingBottom: 16,
         backgroundColor: "#FFFFFF",
-        top: 20,
-   
-        bottom: 20,
         paddingTop: Platform.OS === 'ios' ? 50 : 24,
-      
     },
     headerContent: {
-        flexDirection: "row",
+        flexDirection: "row",       
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 8,
-    },
-    headerActions: {
-        flexDirection: "row",
-        alignItems: "center",
-        left: 90,
-        gap: 16,
     },
     userInfo: {
         flexDirection: "row",
@@ -410,43 +429,28 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#062654",
         marginBottom: 2,
-        fontFamily: 'Inter-Medium',
+    },
+    darkText: {
+        color: "#FFFFFF",
     },
     userName: {
         fontSize: 22,
         fontWeight: "600",
         color: "#202124",
-        fontFamily: 'Inter-SemiBold',
-    },
-    darkText: {
-        color: "#FFFFFF",
     },
     headerSubText: {
         fontSize: 14,
         color: "#5F6368",
         marginTop: 8,
-        fontFamily: 'Inter-Regular',
     },
     darkSubText: {
         color: "#9AA0A6",
     },
-    notificationButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: "center",
+    headerActions: {
+        flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(26, 115, 232, 0.1)",
-        position: 'relative',
+        gap: 16,
     },
-    notificationBadge: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#F5A623',},
     sectionContainer: {
         marginBottom: 24,
         paddingHorizontal: 24,
@@ -461,19 +465,26 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "600",
         color: "#062654",
-        fontFamily: 'Inter-SemiBold',
     },
     monthText: {
         fontSize: 14,
         color: "#5F6368",
         fontWeight: "500",
-        fontFamily: 'Inter-Medium',
     },
     viewAllText: {
         fontSize: 14,
         color: "#062654",
         fontWeight: "500",
-        fontFamily: 'Inter-Medium',
+    },
+    noMedicationsContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
+    },
+    noMedicationsText: {
+        textAlign: 'center',
+        marginTop: 8,
+        color: "#062654",
     },
     calendarContainer: {
         flexDirection: "row",
@@ -494,7 +505,6 @@ const styles = StyleSheet.create({
         fontWeight: "500",
         color: "#5F6368",
         marginBottom: 6,
-        fontFamily: 'Inter-Medium',
     },
     selectedDayText: {
         color: "#062654",
@@ -514,64 +524,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "500",
         color: "#202124",
-        fontFamily: 'Inter-Medium',
     },
     selectedDateText: {
         color: "#FFFFFF",
-    },
-    medicineList: {
-        paddingRight: 24,
-    },
-    medicineItemContainer: {
-        flexDirection: "row",
-        backgroundColor: "#062654",
-        borderRadius: 16,
-        padding: 16,
-        marginRight: 16,
-        width: 300,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 4,
-        alignItems: "center",
-        marginVertical: 10,
-        marginHorizontal: 10,
-    },
-    medicineImage: {
-        width: 70,
-        height: 70,
-        marginRight: 16,
-    },
-    medicineDetails: {
-        flex: 1,
-    },
-    medicineHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 8,
-    },
-    medicineName: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#ffffff",
-        fontFamily: 'Inter-SemiBold',
-    },
-    medicineInfoRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 4,
-    },
-    medicineInfoText: {
-        fontSize: 14,
-        color: "#ffffff",
-        marginLeft: 8,
-        fontFamily: 'Inter-Regular',
-    },
-    ratingContainer: {
-        flexDirection: "row",
-        marginTop: 8,
     },
     challengeList: {
         paddingRight: 24,
@@ -601,23 +556,46 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: "#ffffff",
         marginBottom: 12,
-        fontFamily: 'Inter-SemiBold',
     },
     progressBar: {
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: "#ffffff",
-        marginBottom: 6,
-        overflow: "hidden",
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: "#FFFFFF20",
+        marginBottom: 12,
+        overflow: 'hidden',
     },
     progressFill: {
-        height: "100%",
-        borderRadius: 3,
+        height: '100%',
+        borderRadius: 2,
     },
     progressText: {
         fontSize: 12,
         textAlign: "right",
-        fontFamily: 'Inter-Medium',
+    },
+    medicineDetails: {
+        gap: 6,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    detailText: {
+        fontSize: 12,
+        color: "#FFFFFF",
+    },
+    takenBadge: {
+        backgroundColor: '#4CAF50',
+        borderRadius: 12,
+        paddingVertical: 2,
+        paddingHorizontal: 8,
+        alignSelf: 'flex-end',
+        marginTop: 4,
+    },
+    takenText: {
+        fontSize: 10,
+        color: '#FFFFFF',
+        fontWeight: 'bold',
     },
     statsContainer: {
         flexDirection: "row",
@@ -647,14 +625,12 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: "#FFD700",
         marginBottom: 4,
-        fontFamily: 'Inter-SemiBold',
     },
     statLabel: {
         fontSize: 12,
         color: "#ffffff",
         textTransform: "uppercase",
         letterSpacing: 0.5,
-        fontFamily: 'Inter-Medium',
     },
     statSeparator: {
         width: 1,
