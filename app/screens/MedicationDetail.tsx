@@ -6,14 +6,19 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Image,
+  Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MotiView } from "moti";
 import { Easing } from "react-native-reanimated";
 import { db } from "../../config/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+// Removed unused imports related to storage
+
+const { width } = Dimensions.get('window');
 
 const MedicationDetail = () => {
   const router = useRouter();
@@ -28,9 +33,11 @@ const MedicationDetail = () => {
     reminderType: string;
     taken?: boolean;
     rating?: number;
+    imageUrl?: string;
   } | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   const [editedMedication, setEditedMedication] = useState({
     medicationName: "",
@@ -51,6 +58,10 @@ const MedicationDetail = () => {
 
           if (docSnap.exists()) {
             const data = docSnap.data();
+            
+            // Removed image fetching logic as 'storage' is not available
+            let imageUrl = '';
+
             setMedication({
               medicationName: data.medicationName || "",
               medicationType: data.medicationType || "",
@@ -60,6 +71,7 @@ const MedicationDetail = () => {
               reminderType: data.reminderType || "",
               taken: data.taken || false,
               rating: data.rating || 0,
+              imageUrl: imageUrl
             });
 
             setEditedMedication({
@@ -76,6 +88,8 @@ const MedicationDetail = () => {
           }
         } catch (error) {
           console.error("Error fetching document: ", error);
+        } finally {
+          setImageLoading(false);
         }
       };
 
@@ -130,45 +144,77 @@ const MedicationDetail = () => {
   };
 
   if (!id) return <Text>Loading...</Text>;
-  if (!medication) return <Text>Loading medication details...</Text>;
+  if (!medication) return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#062654" />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <View style={styles.topHalfCircle} />
-
-      <View style={{ position: "absolute", top: 70, left: 20, zIndex: 10 }}>
-        { (
-          <MotiView
-            from={{ translateX: -10 }}
-            animate={{ translateX: 10 }}
-            transition={{
-              type: "timing",
-              duration: 800,
-              loop: true,
-              repeatReverse: true,
-              easing: Easing.inOut(Easing.ease),
-            }}
-            style={{ flexDirection: "row", alignItems: "center" }}
-          >
-            <FontAwesome5
-              name="angle-double-left"
-              size={30}
-              color="#FFD700" 
-              onPress={() => router.back()}
+      {/* Top Section with Image */}
+      <View style={styles.topSection}>
+        <View style={styles.topHalfCircle} />
+        
+        <View style={styles.imageContainer}>
+          {medication.imageUrl ? (
+            <Image 
+              source={{ uri: medication.imageUrl }}
+              style={styles.medicationImage}
+              resizeMode="contain"
+              onLoadEnd={() => setImageLoading(false)}
             />
-            <Text style={styles.backText}>Back</Text>
-          </MotiView>
-        ) }
+          ) : (
+            <View style={styles.defaultImage}>
+              <FontAwesome5 
+                name="pills" 
+                size={60} 
+                color="#FFF" 
+                style={{ opacity: 0.8 }}
+              />
+            </View>
+          )}
+          
+          {imageLoading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#FFF" />
+            </View>
+          )}
+        </View>
       </View>
 
-      
-{!isEditing && (
-  <Text style={[styles.title, { color: "#062654" }]}>
-    {medication.medicationName}
-  </Text>
-)}
+      {/* Back Button */}
+      <View style={styles.backButtonContainer}>
+        <MotiView
+          from={{ translateX: -10 }}
+          animate={{ translateX: 10 }}
+          transition={{
+            type: "timing",
+            duration: 800,
+            loop: true,
+            repeatReverse: true,
+            easing: Easing.inOut(Easing.ease),
+          }}
+          style={{ flexDirection: "row", alignItems: "center" }}
+        >
+          <FontAwesome5
+            name="angle-double-left"
+            size={30}
+            color="#FFD700"
+            onPress={() => router.back()}
+          />
+          <Text style={styles.backText}>Back</Text>
+        </MotiView>
+      </View>
 
+      {/* Medication Title */}
+      {!isEditing && (
+        <Text style={styles.title}>
+          {medication.medicationName}
+        </Text>
+      )}
 
+      {/* Medication Details */}
       <View style={styles.card}>
         <View style={styles.detailsRow}>
           <Text style={styles.detailsTitle}>Name: </Text>
@@ -239,19 +285,29 @@ const MedicationDetail = () => {
         </View>
       </View>
 
-      {!isEditing && (
+      {/* Edit/Save Buttons */}
+      {!isEditing ? (
         <TouchableOpacity
-          style={[styles.saveButton, { backgroundColor: "#062654" }]}
+          style={[styles.actionButton, { backgroundColor: "#062654" }]}
           onPress={handleEdit}
         >
-          <Text style={styles.saveButtonText}>Edit Medication</Text>
+          <Text style={styles.actionButtonText}>Edit Medication</Text>
         </TouchableOpacity>
-      )}
-
-      {isEditing && (
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Changes</Text>
-        </TouchableOpacity>
+      ) : (
+        <View style={styles.editButtonsContainer}>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: "#E74C3C" }]}
+            onPress={handleCancel}
+          >
+            <Text style={styles.actionButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: "#062654" }]}
+            onPress={handleSave}
+          >
+            <Text style={styles.actionButtonText}>Save Changes</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -261,37 +317,99 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF",
-    padding: 20,
-    paddingTop: 250,
-    justifyContent: "center",
-    alignItems: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF'
+  },
+  topSection: {
+    height: 250,
+    position: 'relative',
+    marginBottom: 20,
   },
   topHalfCircle: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: "60%",
+    height: "100%",
     backgroundColor: "#062654",
     borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
-    zIndex: 1,
-    
+  },
+  imageContainer: {
+    position: 'absolute',
+    bottom: -50,
+    alignSelf: 'center',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+    borderWidth: 3,
+    borderColor: '#FFF',
+  },
+  medicationImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 75,
+  },
+  defaultImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 75,
+    backgroundColor: '#2265A2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 75,
+  },
+  backButtonContainer: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    zIndex: 10,
+  },
+  backText: {
+    color: "#FFF",
+    marginLeft: 5,
+    fontSize: 20,
+    fontWeight: "600",
   },
   title: {
-    fontSize: 35,
+    fontSize: 28,
     fontWeight: "700",
-    color: "#062654", 
-    marginTop: 100, 
-    marginBottom: 2,
-    lineHeight: 45,
+    color: "#062654",
+    textAlign: 'center',
+    marginTop: 30,
+    marginBottom: -20,
   },
   card: {
+    backgroundColor: "#FFF",
     padding: 25,
     borderRadius: 15,
-    marginBottom: 9,
-    width: "99%",
-    maxWidth: 350,
+    marginHorizontal: 20,
+    marginTop: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   detailsRow: {
     flexDirection: "row",
@@ -299,7 +417,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   detailsTitle: {
-    
     fontSize: 18,
     color: "#062654",
     width: "35%",
@@ -319,39 +436,30 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 25,
     borderWidth: 0.5, 
-    borderColor: "#062654", 
-    
-    
-  
+    borderColor: "#062654",
   },
   ratingContainer: {
     flexDirection: "row",
     marginBottom: 12,
+    alignItems: 'center',
   },
-  saveButton: {
-    backgroundColor: "#062654",
+  actionButton: {
     padding: 15,
     borderRadius: 25,
-    marginTop: -30,
-    width: "80%",
+    marginHorizontal: 20,
+    marginTop: 20,
     alignItems: "center",
   },
-  saveButtonText: {
+  actionButtonText: {
     color: "#FFF",
     fontSize: 18,
     fontWeight: "600",
   },
-  backText: {
-    color: "#FFF",
-    marginLeft: 5,
-    fontSize: 20,
-    fontWeight: "600",
-  },
-  cancelText: {
-    color: "#FFD700",
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 5,
+  editButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginTop: 20,
   },
 });
 

@@ -1,136 +1,173 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { FontAwesome } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
 
-const MedicineItem = ({ name, type, image, time, dose, schedule, status }) => {
-  const [isTimeForMedication, setIsTimeForMedication] = useState(false);
+const MedicineItem = ({
+  id,
+  medicationName,
+  medicationType,
+  dose,
+  dosesPerDay,
+  whenToTake,
+  image = "https://via.placeholder.com/150",
+  taken = false,
+  startDate = "",
+  endDate = "",
+  reminderType = "",
+  rating = 0,
+  nextDoseTime = "", // ✅ نضيف وقت الجرعة القادمة
+  onPress,
+}) => {
+  const cardColor = taken ? '#E8F5E9' : '#E3F2FD';
+  const iconColor = taken ? '#2E7D32' : '#1976D2';
+  const textColor = taken ? '#1B5E20' : '#0D47A1';
 
-  useEffect(() => {
-    const now = new Date();
-    // محاولة التعامل مع الوقت بشكل صحيح
-    const [medHour, medMinute] = time.replace(/[APM]/gi, '').split(':').map(Number);
-    const isPM = time.includes('PM') && medHour !== 12;
-    const isAM12 = time.includes('AM') && medHour === 12;
-    const hour24 = isAM12 ? 0 : (isPM ? medHour + 12 : medHour);
-
-    const medicationTime = new Date();
-    medicationTime.setHours(hour24, medMinute, 0, 0);
-
-    // التأكد من التاريخ صالح
-    if (isNaN(medicationTime.getTime())) {
-      console.error("Invalid medication time:", time);
-      return;
+  const getMedicationIcon = () => {
+    switch ((medicationType || '').toLowerCase()) {
+      case 'syrup': return 'bottle-tonic';
+      case 'tablet': return 'pill';
+      case 'injection': return 'needle';
+      case 'capsule': return 'capsule';
+      default: return 'pill';
     }
+  };
 
-    const timeDiff = Math.abs(now.getTime() - medicationTime.getTime());
-    const isWithin30Minutes = timeDiff <= 30 * 60 * 1000;
-
-    setIsTimeForMedication(isWithin30Minutes);
-
-    if (isWithin30Minutes && status !== 'done') {
-      console.log(`Time to take ${name}!`);
-    }
-  }, [time, status, name]);
+  const getTimeIcon = () => {
+    const when = (whenToTake || '').toLowerCase();
+    if (when.includes('dinner')) return 'silverware-fork-knife';
+    if (when.includes('lunch')) return 'food-turkey';
+    if (when.includes('breakfast')) return 'food-croissant';
+    return 'clock-outline';
+  };
 
   return (
-    <View style={styles.medicineItemContainer}>
-      <Image source={{ uri: image }} style={styles.medicineImage} resizeMode="contain" />
+    <TouchableOpacity 
+      style={[styles.medicineItemContainer, { backgroundColor: cardColor }]}
+      onPress={onPress}
+    >
+      <Image source={{ uri: image }} style={styles.medicineImage} resizeMode="cover" />
+
       <View style={styles.medicineDetails}>
-        <View style={styles.medicineHeader}>
-          <Text style={styles.medicineName}>{name} ({type})</Text>
-          {status === "done" ? (
-            <MaterialCommunityIcons name="check-circle" size={24} color="#34A853" />
-          ) : (
-            <MaterialCommunityIcons
-              name={isTimeForMedication ? "bell-ring" : "alert-circle"}
-              size={24}
-              color={isTimeForMedication ? "#FFA000" : "#062654"}
-            />
+        <View style={styles.headerRow}>
+          <Text style={[styles.medicineName, { color: textColor }]}>{medicationName}</Text>
+          <MaterialCommunityIcons 
+            name={taken ? "check-circle" : "alert-circle"} 
+            size={24} 
+            color={iconColor}
+          />
+        </View>
+
+        <View style={styles.infoRow}>
+          <MaterialCommunityIcons name={getMedicationIcon()} size={18} color={iconColor} />
+          <Text style={[styles.infoText, { color: textColor }]}>Type: {medicationType}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <MaterialCommunityIcons name="numeric" size={18} color={iconColor} />
+          <Text style={[styles.infoText, { color: textColor }]}>Dose: {dose}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <MaterialCommunityIcons name="repeat" size={18} color={iconColor} />
+          <Text style={[styles.infoText, { color: textColor }]}>Doses/Day: {dosesPerDay}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <MaterialCommunityIcons name={getTimeIcon()} size={18} color={iconColor} />
+          <Text style={[styles.infoText, { color: textColor }]}>When: {whenToTake}</Text>
+        </View>
+
+        {nextDoseTime ? (
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="clock-check" size={18} color={iconColor} />
+            <Text style={[styles.infoText, { color: textColor }]}>Next: {nextDoseTime}</Text>
+          </View>
+        ) : null}
+
+        {reminderType ? (
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="bell" size={18} color={iconColor} />
+            <Text style={[styles.infoText, { color: textColor }]}>Reminder: {reminderType}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.footer}>
+          <View style={styles.ratingContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <FontAwesome
+                key={star}
+                name={star <= rating ? "star" : "star-o"}
+                size={16}
+                color="#FFD700"
+              />
+            ))}
+          </View>
+          {taken && (
+            <Text style={styles.doneText}>✓ Taken</Text>
           )}
         </View>
-
-        <View style={styles.medicineInfoRow}>
-          <MaterialCommunityIcons name="clock-outline" size={18} color="#ffffff" />
-          <Text style={styles.medicineInfoText}>{time}</Text>
-        </View>
-
-        <View style={styles.medicineInfoRow}>
-          <MaterialCommunityIcons name="pill" size={18} color="#ffffff" />
-          <Text style={styles.medicineInfoText}>{dose}</Text>
-        </View>
-
-        <View style={styles.medicineInfoRow}>
-          <MaterialCommunityIcons name="calendar-clock" size={18} color="#ffffff" />
-          <Text style={styles.medicineInfoText}>{schedule}</Text>
-        </View>
-
-        <View style={styles.ratingContainer}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <FontAwesome
-              key={star}
-              name={star <= 3 ? "star" : "star-o"}
-              size={16}
-              color="#FFD700"
-            />
-          ))}
-        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   medicineItemContainer: {
     flexDirection: "row",
-    backgroundColor: "#062654",
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
-    marginRight: 16,
-    width: 300,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    alignItems: "center",
     marginVertical: 10,
-    marginHorizontal: 10,
+    marginHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 5,
+    alignItems: "center",
   },
   medicineImage: {
     width: 70,
     height: 70,
-    marginRight: 16,
+    marginRight: 14,
+    borderRadius: 12,
   },
   medicineDetails: {
     flex: 1,
   },
-  medicineHeader: {
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   medicineName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
-    fontFamily: 'Inter-SemiBold',
+    fontSize: 17,
+    fontWeight: "700",
+    flexShrink: 1,
   },
-  medicineInfoRow: {
+  infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 5,
   },
-  medicineInfoText: {
+  infoText: {
     fontSize: 14,
-    color: "#ffffff",
     marginLeft: 8,
-    fontFamily: 'Inter-Regular',
+    opacity: 0.85,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
   },
   ratingContainer: {
     flexDirection: "row",
-    marginTop: 8,
+  },
+  doneText: {
+    color: '#388E3C',
+    fontWeight: '600',
+    fontSize: 12,
   },
 });
 
