@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Image, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { db } from "../../config/firebaseConfig";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { FontAwesome5 } from '@expo/vector-icons';
 
 const MyInfo = () => {
+  const moveBack = useState(new Animated.Value(0))[0];
   const router = useRouter();
   const auth = getAuth();
   const user = auth.currentUser;
@@ -62,11 +64,17 @@ const MyInfo = () => {
   return (
     <View style={styles.container}>
       <View style={{ marginBottom: 20 }} /> 
+                  <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Animated.View style={{ flexDirection: "row", alignItems: "center", transform: [{ translateX: moveBack }] }}>
+                      <FontAwesome5 name="angle-double-left" size={30} color="#FFD700" />
+                      <Text style={styles.backText}>Back</Text>
+                    </Animated.View>
+                  </TouchableOpacity>
       <Text style={styles.title}>My Info</Text>
 
       <View style={styles.profileContainer}>
         <Image
-          source={{ uri: profileImage }}
+          source={{ uri: profileImage || 'https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg' }}
           style={styles.profileImage}
         />
         <Text style={styles.changePhotoText}>Profile Picture</Text>
@@ -155,6 +163,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+    backButton: { flexDirection: "row", alignItems: "center" },
+      backText: { fontSize: 20, color: "#062654", marginLeft: 5, fontWeight: "bold" },
   profileImage: {
     width: 120,
     height: 120,
