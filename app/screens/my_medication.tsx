@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#062654",
   },
   delete: {
-    backgroundColor: "#062654",
+    backgroundColor: "#E74C3C",
   },
   btnText: {
     color: "#FFF",
