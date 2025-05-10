@@ -70,7 +70,7 @@ const fetchMedications = async () => {
   return (
     <View>
       <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <Text style={{ fontSize: 24  }}>🔔</Text>
+        <Text style={{ fontSize: 24 , marginRight:80 }}>🔔</Text>
       </TouchableOpacity>
 
       <Modal visible={modalVisible} transparent animationType="slide">
