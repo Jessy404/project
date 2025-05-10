@@ -190,10 +190,10 @@ const HomeScreen: React.FC = () => {
   const fetchMedicinesForDate = async (day: number) => {
     setLoading(true);
     setTimeout(() => {
-        // إنشاء مصفوفة الأدوية بناءً على اليوم المحدد
+      
         const mockMedicines: MedicineData[] = [];
         
-        // دواء أساسي لكل الأيام
+        
         mockMedicines.push({
             id: "vitamin-d-" + day,
             medicationName: "Vitamin D",
@@ -240,21 +240,7 @@ const HomeScreen: React.FC = () => {
         }
 
         // دواء إضافي في أيام محددة (يوم 5، 10، 15، 20، 25، 30)
-        // if ([5, 10, 15, 20, 25, 30].includes(day)) {
-        //     mockMedicines.push({
-        //         id: "special-med-" + day,
-        //         medicationName: "Multivitamin",
-        //         medicationType: "Tablet",
-        //         dose: "1 tablet",
-        //         dosesPerDay: "1",
-        //         whenToTake: "Evening",
-        //         startDate: "05/01/2025",
-        //         endDate: "05/31/2025",
-        //         taken: false, // لم يتم تناوله بعد
-        //         rating: 4
-        //     });
-        // }
-
+      
         setMedicines(mockMedicines);
         setLoading(false);
     }, 500);
@@ -450,6 +436,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 16,
+        left:90,
     },
     sectionContainer: {
         marginBottom: 24,

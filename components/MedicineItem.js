@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
 
@@ -15,13 +15,12 @@ const MedicineItem = ({
   endDate = "",
   reminderType = "",
   rating = 0,
-  onPress
+  nextDoseTime = "", // ✅ نضيف وقت الجرعة القادمة
+  onPress,
 }) => {
-  const [isTimeForMedication, setIsTimeForMedication] = useState(false);
-
-  // تحديد لون البطاقة بناءً على حالة الدواء
-  const cardColor = taken ? '#2E7D32' : '#062654';
-  const iconColor = taken ? '#4CAF50' : '#FFD700';
+  const cardColor = taken ? '#E8F5E9' : '#E3F2FD';
+  const iconColor = taken ? '#2E7D32' : '#1976D2';
+  const textColor = taken ? '#1B5E20' : '#0D47A1';
 
   const getMedicationIcon = () => {
     switch ((medicationType || '').toLowerCase()) {
@@ -47,43 +46,50 @@ const MedicineItem = ({
       onPress={onPress}
     >
       <Image source={{ uri: image }} style={styles.medicineImage} resizeMode="cover" />
-      
+
       <View style={styles.medicineDetails}>
-        <View style={styles.medicineHeader}>
-          <Text style={styles.medicineName}>{medicationName}</Text>
+        <View style={styles.headerRow}>
+          <Text style={[styles.medicineName, { color: textColor }]}>{medicationName}</Text>
           <MaterialCommunityIcons 
-            name={taken ? "check-circle" : isTimeForMedication ? "bell-ring" : "alert-circle"} 
+            name={taken ? "check-circle" : "alert-circle"} 
             size={24} 
-            color={taken ? "#4CAF50" : "#FFD700"} 
+            color={iconColor}
           />
         </View>
 
-        <View style={styles.medicineInfoRow}>
+        <View style={styles.infoRow}>
           <MaterialCommunityIcons name={getMedicationIcon()} size={18} color={iconColor} />
-          <Text style={styles.medicineInfoText}>type: {medicationType}</Text>
+          <Text style={[styles.infoText, { color: textColor }]}>Type: {medicationType}</Text>
         </View>
 
-        <View style={styles.medicineInfoRow}>
+        <View style={styles.infoRow}>
           <MaterialCommunityIcons name="numeric" size={18} color={iconColor} />
-          <Text style={styles.medicineInfoText}>dose: {dose}</Text>
+          <Text style={[styles.infoText, { color: textColor }]}>Dose: {dose}</Text>
         </View>
 
-        <View style={styles.medicineInfoRow}>
+        <View style={styles.infoRow}>
           <MaterialCommunityIcons name="repeat" size={18} color={iconColor} />
-          <Text style={styles.medicineInfoText}>dosesPerDay : {dosesPerDay}</Text>
+          <Text style={[styles.infoText, { color: textColor }]}>Doses/Day: {dosesPerDay}</Text>
         </View>
 
-        <View style={styles.medicineInfoRow}>
+        <View style={styles.infoRow}>
           <MaterialCommunityIcons name={getTimeIcon()} size={18} color={iconColor} />
-          <Text style={styles.medicineInfoText}>whenToTake : {whenToTake}</Text>
+          <Text style={[styles.infoText, { color: textColor }]}>When: {whenToTake}</Text>
         </View>
 
-        {reminderType && (
-          <View style={styles.medicineInfoRow}>
-            <MaterialCommunityIcons name="bell" size={18} color={iconColor} />
-            <Text style={styles.medicineInfoText}> reminderType: {reminderType}</Text>
+        {nextDoseTime ? (
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="clock-check" size={18} color={iconColor} />
+            <Text style={[styles.infoText, { color: textColor }]}>Next: {nextDoseTime}</Text>
           </View>
-        )}
+        ) : null}
+
+        {reminderType ? (
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons name="bell" size={18} color={iconColor} />
+            <Text style={[styles.infoText, { color: textColor }]}>Reminder: {reminderType}</Text>
+          </View>
+        ) : null}
 
         <View style={styles.footer}>
           <View style={styles.ratingContainer}>
@@ -97,7 +103,7 @@ const MedicineItem = ({
             ))}
           </View>
           {taken && (
-            <Text style={styles.takenText}> Done ✓</Text>
+            <Text style={styles.doneText}>✓ Taken</Text>
           )}
         </View>
       </View>
@@ -108,65 +114,61 @@ const MedicineItem = ({
 const styles = StyleSheet.create({
   medicineItemContainer: {
     flexDirection: "row",
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
-    marginVertical: 8,
+    marginVertical: 10,
     marginHorizontal: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 5,
     alignItems: "center",
   },
   medicineImage: {
-    width: 80,
-    height: 80,
-    marginRight: 16,
+    width: 70,
+    height: 70,
+    marginRight: 14,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   medicineDetails: {
     flex: 1,
   },
-  medicineHeader: {
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   medicineName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "700",
     flexShrink: 1,
   },
-  medicineInfoRow: {
+  infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 5,
   },
-  medicineInfoText: {
+  infoText: {
     fontSize: 14,
-    color: "#FFFFFF",
     marginLeft: 8,
-    opacity: 0.9,
+    opacity: 0.85,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
   },
   ratingContainer: {
     flexDirection: "row",
   },
-  takenText: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
+  doneText: {
+    color: '#388E3C',
+    fontWeight: '600',
     fontSize: 12,
   },
 });
-console.log(`Rendering medication item: ${item.medicationName} | Taken: ${item.taken}`);
+
 export default MedicineItem;
