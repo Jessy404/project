@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image } from "react-native";
 import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { collection, getDocs, query, addDoc, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../../config/firebaseConfig";
 import { getAuth } from "firebase/auth";
-
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { db } from "@/config/firebaseConfig";
 
 type Medication = {
   docID: string;
@@ -16,51 +16,11 @@ type Medication = {
   endDate: string;
   reminderType: string;
   userEmail: string;
-  dosesPerDay: number; // Added this property
+  dosesPerDay: number;
   taken?: boolean;
   rating?: number;
+  imageUrl?: string;
 };
-
-const MyMedication = () => {
-  const router = useRouter();
-  const [searchText, setSearchText] = useState("");
-  const [medications, setMedications] = useState<Medication[]>([]);
-
-  useEffect(() => {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-  
-    if (!currentUser) return;
-  
-    const q = query(collection(db, "medication"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const medicationsData: Medication[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.userEmail === currentUser.email) {
-          medicationsData.push({
-            docID: doc.id,
-            medicationName: data.medicationName,
-            medicationType: data.medicationType,
-            dose: data.dose,
-            startDate: data.startDate,
-            endDate: data.endDate,
-            reminderType: data.reminderType,
-            userEmail: data.userEmail,
-            taken: data.taken !== undefined ? data.taken : false,
-            rating: data.rating || 0,
-            dosesPerDay:  data.dosesPerDay || 1, 
-          });
-        }
-      });
-      setMedications(medicationsData);
-    });
-  
-    return () => unsubscribe();
-  }, []);
-  
-     
-
   const handleViewMedication = (docID: string) => {
     router.push({ pathname: "/screens/MedicationDetail", params: { id: docID } });
 
@@ -96,37 +56,86 @@ const MyMedication = () => {
       console.error("Error updating rating: ", error);
     }
   };
-const getNextDoseTime = (dosesPerDay: number) => {
-  const now = new Date();
-
-  const doseTimes: Date[] = [];
-  const intervalInMinutes = (24 * 60) / dosesPerDay; 
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  for (let i = 0; i < dosesPerDay; i++) {
-    const doseTime = new Date(startOfDay.getTime() + i * intervalInMinutes * 60000);
-    doseTimes.push(doseTime);
-  }
-
-  for (let dose of doseTimes) {
-    if (dose > now) {
-      return dose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-  }
-
-  // لو كل الجرعات عدت، نرجع أول جرعة لتاني يوم
-  const nextDayDose = new Date(doseTimes[0].getTime());
-  nextDayDose.setDate(nextDayDose.getDate() + 1);
-  return nextDayDose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
-
-  const filteredMedications = medications.filter((item) =>
-    item.medicationName.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.medicationType.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.dose.toLowerCase().includes(searchText.toLowerCase())
+const MyMedication = () => {
+  const router = useRouter();
+  const [searchText, setSearchText] = useState("");
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const storage = getStorage();
+  const filteredMedications = medications.filter((medication) =>
+    medication.medicationName.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  useEffect(() => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) return;
+
+    const q = query(collection(db, "medication"));
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      const medicationsData: Medication[] = [];
+      
+      for (const doc of querySnapshot.docs) {
+        const data = doc.data();
+        if (data.userEmail === currentUser.email) {
+          let imageUrl = '';
+          
+          // Try to get medication image from Firebase Storage
+          try {
+            if (data.imagePath) {
+              const imageRef = ref(storage, data.imagePath);
+              imageUrl = await getDownloadURL(imageRef);
+            }
+          } catch (error) {
+            console.log("Error getting medication image:", error);
+          }
+
+          medicationsData.push({
+            docID: doc.id,
+            medicationName: data.medicationName,
+            medicationType: data.medicationType,
+            dose: data.dose,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            reminderType: data.reminderType,
+            userEmail: data.userEmail,
+            taken: data.taken !== undefined ? data.taken : false,
+            rating: data.rating || 0,
+            dosesPerDay: data.dosesPerDay || 1,
+            imageUrl: imageUrl || ''
+          });
+        }
+      }
+      setMedications(medicationsData);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const getNextDoseTime = (dosesPerDay: number) => {
+    const now = new Date();
+    const doseTimes: Date[] = [];
+    const intervalInMinutes = (24 * 60) / dosesPerDay;
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < dosesPerDay; i++) {
+      const doseTime = new Date(startOfDay.getTime() + i * intervalInMinutes * 60000);
+      doseTimes.push(doseTime);
+    }
+
+    for (let dose of doseTimes) {
+      if (dose > now) {
+        return dose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    const nextDayDose = new Date(doseTimes[0].getTime());
+    nextDayDose.setDate(nextDayDose.getDate() + 1);
+    return nextDayDose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+
 
   const renderItem = ({ item }: { item: Medication }) => {
     if (!item) return null;
@@ -134,64 +143,78 @@ const getNextDoseTime = (dosesPerDay: number) => {
     return (
       <View style={styles.card}>
         <View style={styles.cardContent}>
-          <View style={styles.header}>
-            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-              <Text style={styles.medName}>
-                {item.medicationName} <Text style={styles.medType}>({item.medicationType})</Text>
-              </Text>
+
+          <View style={styles.imageContainer}>
+            {item.imageUrl ? (
+              <Image 
+                source={{ uri: item.imageUrl }} 
+                style={styles.medicationImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.defaultImage}>
+                <FontAwesome5 name="pills" size={40} color="#2265A2" />
+              </View>
+            )}
+          </View>
+          
+          <View style={styles.infoContainer}>
+            <View style={styles.header}>
+              <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                <Text style={styles.medName}>
+                  {item.medicationName} <Text style={styles.medType}>({item.medicationType})</Text>
+                </Text>
+              </View>
+              {item.taken && (
+                <FontAwesome name="check-circle" size={22} color="#4CAF50" style={{ marginLeft: 10 }} />
+              )}
             </View>
-            {item.taken && (
-              <FontAwesome name="check-circle" size={22} color="#4CAF50" style={{ marginLeft: 10 }} />
-            )}
-            <FontAwesome5 name="pills" size={24} color="#2265A2" style={{ marginLeft: 10 }} />
+
+            <Text style={styles.details}>Dose: {item.dose} mlg</Text>
+            <Text style={styles.details}>
+              Next Dose: {getNextDoseTime(item.dosesPerDay)}
+            </Text>
+            <Text style={styles.details}>
+              Doses Per Day: {item.dosesPerDay}
+            </Text>
+
+            <View style={styles.ratingContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => handleRating(item.docID, star)}>
+                  <FontAwesome
+                    name={(item.rating ?? 0) >= star ? "star" : "star-o"}
+                    size={18}
+                    color={(item.rating ?? 0) >= star ? "#FFD700" : "#CCC"}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-
- 
-<Text style={styles.details}>Dose: {item.dose}</Text>
-<Text style={styles.details}>
-  Next Dose: {getNextDoseTime(item.dosesPerDay)}
-</Text>
-<Text style={styles.details}>dosesPerDay
-  : {item.dosesPerDay}
-</Text>
-
-         <View style={styles.ratingContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => handleRating(item.docID, star)}>
-                <FontAwesome
-                 name={(item.rating ?? 0) >= star ? "star" : "star-o"}
-
-                  size={18}
-                  color={(item.rating ?? 0) >= star ? "#FFD700" : "#CCC"}
-
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.buttons}>
-            {!item.taken && (
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: "#062654" }]}
-                onPress={() => handleTaken(item.docID)}
-              >
-                <Text style={styles.btnText}>Taken</Text>
-              </TouchableOpacity>
-            )}
-
+        </View>
+        
+        <View style={styles.buttons}>
+          {!item.taken && (
             <TouchableOpacity
-              style={[styles.button, styles.edit]}
-              onPress={() => handleViewMedication(item.docID)}
+              style={[styles.button, { backgroundColor: "#062654" }]}
+              onPress={() => handleTaken(item.docID)}
             >
-              <Text style={styles.btnText}>View</Text>
+              <Text style={styles.btnText}>Taken</Text>
             </TouchableOpacity>
+          )}
 
-            <TouchableOpacity
-              style={[styles.button, styles.delete]}
-              onPress={() => handleDelete(item.docID)}
-            >
-              <Text style={styles.btnText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.button, styles.edit]}
+            onPress={() => handleViewMedication(item.docID)}
+          >
+            <Text style={styles.btnText}>View</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.delete]}
+            onPress={() => handleDelete(item.docID)}
+          >
+            <Text style={styles.btnText}>Delete</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -212,6 +235,7 @@ const getNextDoseTime = (dosesPerDay: number) => {
           />
         </View>
       </View>
+      
       {filteredMedications.length === 0 ? (
         <Text style={{ textAlign: 'center', color: '#888', marginTop: 20 }}>No medications found.</Text>
       ) : (
@@ -266,7 +290,6 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#FFF",
-    padding: 10,
     borderRadius: 20,
     marginBottom: 15,
     shadowColor: "#000",
@@ -274,11 +297,35 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+    overflow: 'hidden',
   },
   cardContent: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    marginBottom: 10,
+    flexDirection: "row",
+    padding: 15,
+  },
+  imageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginRight: 15,
+    backgroundColor: '#F0F4F8',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medicationImage: {
+    width: '100%',
+    height: '100%',
+  },
+  defaultImage: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+  },
+  infoContainer: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -286,13 +333,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   medName: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#2265A2",
     marginRight: 10,
   },
   medType: {
-    fontSize: 18,
+    fontSize: 14,
     color: "#555",
   },
   ratingContainer: {
@@ -307,7 +354,10 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#F5F5F5',
+    borderTopWidth: 1,
+    borderTopColor: '#EEE',
   },
   button: {
     flex: 1,
