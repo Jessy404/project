@@ -1,391 +1,207 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  TextInput,
-  Image,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Fontisto from "@expo/vector-icons/Fontisto";
-import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import Toast from "react-native-toast-message";
-import { Animated } from "react-native";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
-import { getAuth } from "firebase/auth";
 
-interface Medication {
+interface MedicationItem {
+  docID: string;
   medicationName: string;
   medicationType: string;
   dose: string;
-  whenToTake: string;
-  startDate: string;
-  endDate: string;
-  reminderType: string;
-  dosesPerDay: string; // Added dosesPerDay property
+  dosesPerDay: number;
+  taken: boolean;
+  rating?: number;
 }
 
-const AddNewMedication = () => {
-  const [isModalVisible, setModalVisible] = useState<boolean>(false);
-  const [reminderModalVisible, setReminderModalVisible] = useState<boolean>(false);
-  const [medicationType, setMedicationType] = useState<string>("");
-  const [medicationName, setMedicationName] = useState<string>("");
-  const [dose, setDose] = useState<string>("");
-  const [whenToTake, setWhenToTake] = useState<string>("");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-  const [reminderType, setReminderType] = useState<string>("");
-  const [medications, setMedications] = useState<Medication[]>([]);
-  const [whenToTakeModalVisible, setWhenToTakeModalVisible] = useState(false);
-  const [dosesPerDay, setDosesPerDay] = useState<string>("");
-  const medicationOptions = ["Tablet", "Capsules", "Drops", "Syrup", "Injection"];
+const MedicineItem: React.FC<{ item: MedicationItem }> = ({ item }) => {
   const router = useRouter();
-  const [moveLeft] = useState(new Animated.Value(0));   
-  const [moveBack] = useState(new Animated.Value(0)); 
-  const auth = getAuth();
-  useEffect(() => {
-    const animateArrow = () => {
-      Animated.sequence([
-        Animated.timing(moveLeft, {
-          toValue: -10,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(moveLeft, {
-          toValue: 10,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(moveBack, {
-          toValue: -10,   
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(moveBack, {
-          toValue: 10,   
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start(() => animateArrow());
-    };
-    animateArrow();
-  }, [moveLeft, moveBack]);
 
-  const saveMedication = async () => {
-    const docID = Date.now().toString();
-    const userEmail = auth.currentUser?.email;
-
-    if (
-      !medicationName.trim() ||
-      !medicationType.trim() ||
-      !dose.trim() ||
-      !whenToTake.trim() ||
-      !startDate.trim() ||
-      !endDate.trim()
-    ) {
-      Toast.show({
-        type: "error",
-        position: "top",
-        text1: "Please fill in all the fields!",
-        visibilityTime: 4000,
-        autoHide: true,
-        topOffset: 50,
-      });
-      return;
-    }
-
-    Alert.alert("Confirm Medication", "Are you sure you want to save this medication?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Yes",
-        onPress: async () => {
-          const newMedication: Medication = {
-            medicationName,
-            medicationType,
-            dose,
-            whenToTake,
-            startDate,
-            endDate,
-            dosesPerDay,
-            reminderType: ""
-          };
-
-          try {
-            await setDoc(doc(db, "medication", docID), {
-              ...newMedication,
-              userEmail,
-              docID,
-            });
-            setMedications([...medications, newMedication]);
-            setMedicationName("");
-            setMedicationType("");
-            setDose("");
-            setWhenToTake("");
-            setStartDate("");
-            setEndDate("");
-            setReminderType("");
-            Toast.show({
-              type: "success",
-              position: "top",
-              text1: "Medication added successfully!",
-              visibilityTime: 4000,
-              autoHide: true,
-              topOffset: 50,
-            });
-          } catch (e) {
-            console.log(e);
-          }
-        },
-      },
-    ]);
+  const handleViewMedication = () => {
+    router.push({ pathname: "/screens/MedicationDetail", params: { id: item.docID } });
   };
 
+  const handleTaken = async () => {
+    try {
+      const docRef = doc(db, "medication", item.docID);
+      await updateDoc(docRef, {
+        taken: true,
+      });
+    } catch (error) {
+      console.error("Error updating document: ", error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteDoc(doc(db, "medication", item.docID));
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+    }
+  };
+
+  const handleRating = async (rating: number) => {
+    try {
+      const docRef = doc(db, "medication", item.docID);
+      await updateDoc(docRef, {
+        rating,
+      });
+    } catch (error) {
+      console.error("Error updating rating: ", error);
+    }
+  };
+
+const getNextDoseTime = (dosesPerDay: number) => {
+  if (typeof dosesPerDay !== 'number' || dosesPerDay <= 0) return "Invalid dose";
+
+  const now = new Date();
+  const doseTimes: Date[] = [];
+  const intervalInMinutes = (24 * 60) / dosesPerDay;
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < dosesPerDay; i++) {
+    const doseTime = new Date(startOfDay.getTime() + i * intervalInMinutes * 60000);
+    doseTimes.push(doseTime);
+  }
+
+  for (let dose of doseTimes) {
+    if (dose > now) {
+      return dose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  }
+
+  const nextDayDose = new Date(doseTimes[0].getTime());
+  nextDayDose.setDate(nextDayDose.getDate() + 1);
+  return nextDayDose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+
   return (
-    <KeyboardAvoidingView
-  style={{ flex: 1 }}
-  behavior={Platform.OS === "ios" ? "padding" : "padding"}
-  keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
->
-    <ScrollView
- 
-    keyboardShouldPersistTaps="handled"
-  >
-    <View style={styles.container}>
-    <View style={styles.header}>
-    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-  <Animated.View style={{ flexDirection: "row", alignItems: "center", transform: [{ translateX: moveBack }] }}>
-    <FontAwesome5 name="angle-double-left" size={30} color="#FFD700" />
-    <Text style={styles.backText}>Back</Text>
-  </Animated.View>
-</TouchableOpacity>
-
-    </View>
-
-      <Text style={styles.title}>Add New Medication</Text>
-      <Image source={require("../../assets/images/MED.png")} style={styles.image} />
-
-      <View style={styles.inputWrapper}>
-        <Ionicons name="medkit" size={20} color="#2265A2" style={styles.iconLeft} />
-        <TextInput
-          style={styles.input}
-          placeholder="Medication Name"
-          value={medicationName}
-          onChangeText={setMedicationName}
-        />
-      </View>
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.button1}>
-        <Fontisto name="drug-pack" size={24} color="#2265A2" />
-        <Text style={styles.buttonText1}>{medicationType || "Select Medication Type"}</Text>
-      </TouchableOpacity>
-
-      <View style={styles.inputWrapper}>
-        <FontAwesome name="eyedropper" size={24} color="#2265A2" style={styles.iconLeft} />
-        <TextInput
-          style={styles.input}
-          placeholder="Dose (e.g. 2, 15ml)"
-          value={dose}
-          onChangeText={setDose}
-        />
-      </View>
-
-      <TouchableOpacity onPress={() => setWhenToTakeModalVisible(true)} style={styles.button}>
-        <Fontisto name="clock" size={20} color="#FFF" style={styles.iconLeft} />
-        <Text style={styles.buttonText}>{whenToTake || "Select Time to Take"}</Text>
-      </TouchableOpacity>
-
-      <View style={styles.inputWrapper}>
-        <Ionicons name="calendar-outline" size={24} color="#2265A2" style={styles.iconLeft} />
-        <TextInput
-          style={styles.input}
-          placeholder="Start Date (MM/DD/YYYY)"
-          value={startDate}
-          onChangeText={setStartDate}
-        />
-      </View>
-
-      <View style={styles.inputWrapper}>
-        <Ionicons name="calendar-outline" size={24} color="#2265A2" style={styles.iconLeft} />
-        <TextInput
-          style={styles.input}
-          placeholder="End Date (MM/DD/YYYY)"
-          value={endDate}
-          onChangeText={setEndDate}
-        />
-      </View>
-<View style={styles.inputWrapper}>
-  <Ionicons name="repeat" size={24} color="#2265A2" style={styles.iconLeft} />
-  <TextInput
-    style={styles.input}
-    placeholder="Doses Per Day"
-    keyboardType="numeric"
-    value={dosesPerDay}
-    onChangeText={setDosesPerDay}
-  />
-</View>
-
-      <TouchableOpacity style={styles.addButton} onPress={() => setReminderModalVisible(true)}>
-        <AntDesign name="bells" size={20} color="#fff" style={styles.iconLeft} />
-        <Text style={styles.addButtonText}>Add Reminder</Text>
-      </TouchableOpacity>
-
-      {reminderType ? <Text style={{ marginBottom: 10, color: '#2265A2' }}>Reminder: {reminderType}</Text> : null}
-
-      <TouchableOpacity style={styles.saveButton} onPress={saveMedication}>
-        <Text style={styles.saveButtonText}>Save Medication</Text>
-      </TouchableOpacity>
-
-      {/* Medication Type Modal */}
-      <Modal visible={isModalVisible} transparent animationType="slide">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Select Medication Type</Text>
-            {medicationOptions.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.optionButton}
-                onPress={() => {
-                  setMedicationType(option);
-                  setModalVisible(false);
-                }}
-              >
-                <Text style={styles.optionText}>{option}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
+    <View style={styles.card}>
+      <View style={styles.cardContent}>
+        <View style={styles.header}>
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+            <Text style={styles.medName}>
+              {item.medicationName} <Text style={styles.medType}>({item.medicationType})</Text>
+            </Text>
           </View>
+          {item.taken && (
+            <FontAwesome name="check-circle" size={22} color="#4CAF50" style={{ marginLeft: 10 }} />
+          )}
+          <FontAwesome5 name="pills" size={24} color="#2265A2" style={{ marginLeft: 10 }} />
         </View>
-      </Modal>
 
-      {/* When To Take Modal */}
-      <Modal visible={whenToTakeModalVisible} transparent animationType="slide">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Select Time to Take</Text>
-            {["Morning", "Before Lunch", "After Lunch", "Afternoon", "Evening", "Before Dinner", "After Dinner", "Before Sleeping"].map(
-              (option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.optionButton}
-                  onPress={() => {
-                    setWhenToTake(option);
-                    setWhenToTakeModalVisible(false);
-                  }}
-                >
-                  <Text style={styles.optionText}>{option}</Text>
-                </TouchableOpacity>
-              )
-            )}
-            <TouchableOpacity onPress={() => setWhenToTakeModalVisible(false)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Close</Text>
+        <Text style={styles.details}>Dose: {item.dose}</Text>
+        <Text style={styles.details}>Next Dose: {getNextDoseTime(item.dosesPerDay)}</Text>
+        <Text style={styles.details}>dosesPerDay: {item.dosesPerDay}</Text>
+
+        <View style={styles.ratingContainer}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <TouchableOpacity key={star} onPress={() => handleRating(star)}>
+              <FontAwesome
+                name={(item.rating ?? 0) >= star ? "star" : "star-o"}
+                size={18}
+                color={(item.rating ?? 0) >= star ? "#FFD700" : "#CCC"}
+              />
             </TouchableOpacity>
-          </View>
+          ))}
         </View>
-      </Modal>
 
-      {/* Reminder Modal */}
-      <Modal visible={reminderModalVisible} transparent animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Select Reminder Type</Text>
+        <View style={styles.buttons}>
+          {!item.taken && (
             <TouchableOpacity
-              style={styles.optionButton}
-              onPress={() => {
-                setReminderType("Daily");
-                setReminderModalVisible(false);
-              }}
+              style={[styles.button, { backgroundColor: "#062654" }]}
+              onPress={handleTaken}
             >
-              <Text style={styles.optionText}>Daily</Text>
+              <Text style={styles.btnText}>Taken</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.optionButton}
-              onPress={() => {
-                setReminderType("Weekly");
-                setReminderModalVisible(false);
-              }}
-            >
-              <Text style={styles.optionText}>Weekly</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setReminderModalVisible(false)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+          )}
 
-      <Toast config={{
-        success: ({ text1 }: { text1?: string }) => (
-          <View style={[styles.toastSuccess]}>
-            <Text style={styles.toastText}>{text1 || "Success!"}</Text>
-          </View>
-        ),
-        error: ({ text1 }: { text1?: string }) => (
-          <View style={[styles.toastError]}>
-            <Text style={styles.toastText}>{text1 || "Error!"}</Text>
-          </View>
-        ),
-      }} />
+          <TouchableOpacity
+            style={[styles.button, styles.edit]}
+            onPress={handleViewMedication}
+          >
+            <Text style={styles.btnText}>View</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.delete]}
+            onPress={handleDelete}
+          >
+            <Text style={styles.btnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
-    </ScrollView>
-    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "white", justifyContent: "flex-start", alignItems: "center", padding: 20 },
-  header: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", marginTop: 40, marginBottom: 10 },
-  backButton: { flexDirection: "row", alignItems: "center" },
-  backText: { fontSize: 20, color: "#062654", marginLeft: 5, fontWeight: "bold" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10, alignSelf: "center" ,color: "#062654"},
-  image: { width: 190, height: 190, marginBottom: 0, marginLeft: 12 },
-  input1: { width: "100%", padding: 10, borderWidth: 1, borderColor: "#ccc", borderRadius: 25, marginBottom: 10 },
-  button: { padding: 10, backgroundColor: "#062654", borderRadius: 25, marginBottom: 10, width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" },
-  button1: { padding: 10, borderRadius: 25, borderWidth: 1, borderColor: "#ccc", marginBottom: 10, width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" },
-  buttonText: { color: "white", fontSize: 16, marginLeft: 10 },
-  buttonText1: { color: "ccc", fontSize: 16, marginLeft: 10 },
-  iconLeft1: { marginRight: 10 },
-  addButton: { padding: 10, backgroundColor: "#062654", borderRadius: 25, marginBottom: 10, width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" },
-  addButtonText: { color: "white", fontSize: 16, marginLeft: 10 },
-  saveButton: { backgroundColor: "#062654", padding: 10, borderRadius: 25, width: "100%", marginBottom: 10 },
-  saveButtonText: { color: "white", fontSize: 18, fontWeight: "bold", textAlign: "center" },
-  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center" },
-  modalContainer: { backgroundColor: "white", padding: 20, borderRadius: 10, width: "80%" },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10, textAlign: "center" },
-  optionButton: { padding: 10, borderBottomWidth: 1, borderBottomColor: "#ddd", width: "100%", alignItems: "center" },
-  optionText: { fontSize: 16 },
-  closeButton: { marginTop: 10, padding: 11, backgroundColor: "#062654", borderRadius: 25  },
-  closeButtonText: { color: "white", fontSize: 17 , textAlign: "center"},
-  toastSuccess: { padding: 10, backgroundColor: "green", borderRadius: 25, borderWidth: 2, borderColor: "green" },
-  toastError: { padding: 10, backgroundColor: "crimson", borderRadius: 25, borderWidth: 2, borderColor: "darkred" },
-  toastText: { color: "white", fontSize: 16, fontWeight: "bold" },
-  inputWrapper: {
-    width: '100%',
-    flexDirection: 'row',  
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 25,
+  card: {
+    backgroundColor: "#FFF",
+    padding: 10,
+    borderRadius: 20,
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  cardContent: {
+    flexDirection: "column",
+    alignItems: "flex-start",
     marginBottom: 10,
   },
-  input: {
-    flex: 1, 
-    padding: 10,
-    fontSize: 16,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
   },
-  iconLeft: {
-    marginLeft: 10,   
-    marginRight: 10,  
+  medName: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#2265A2",
+    marginRight: 10,
+  },
+  medType: {
+    fontSize: 18,
+    color: "#555",
+  },
+  details: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 5,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    marginTop: 10,
+  },
+  buttons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+  edit: {
+    backgroundColor: "#062654",
+  },
+  delete: {
+    backgroundColor: "#062654",
+  },
+  btnText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });
 
-export default AddNewMedication;
+export default MedicineItem;
