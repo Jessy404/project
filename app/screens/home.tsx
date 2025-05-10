@@ -81,7 +81,6 @@ const MedicineItem: React.FC<{ item: MedicineData }> = ({ item }) => {
             case 'syrup': return '#4CAF50';
             case 'injection': return '#FF5722';
             case 'capsule': return '#FF9800';
-            case 'drops': return '#9C27B0';
             default: return '#2265A2';
         }
     };
@@ -92,11 +91,7 @@ const MedicineItem: React.FC<{ item: MedicineData }> = ({ item }) => {
         <View style={styles.challengeContainer}>
             <View style={[styles.challengeIconContainer, { backgroundColor: `${iconColor}20` }]}>
                 <MaterialCommunityIcons 
-                    name={
-                        item.medicationType.toLowerCase() === 'syrup' ? 'cup' : 
-                        item.medicationType.toLowerCase() === 'drops' ? 'water' : 
-                        'pill'
-                    } 
+                    name={item.medicationType.toLowerCase() === 'syrup' ? 'cup' : 'pill'} 
                     size={24} 
                     color={iconColor} 
                 />
@@ -164,13 +159,9 @@ const HomeScreen: React.FC = () => {
         { id: '3', title: 'Sleep 8 Hours', icon: 'sleep', color: '#2196F3', progress: 90 },
     ];
 
+    // Helper function to parse mm/dd/yyyy dates
     const parseFirestoreDate = (dateStr: string): Date => {
         const [month, day, year] = dateStr.split('/').map(Number);
-        // تأكد من أن التاريخ صالح
-        if (isNaN(month) || isNaN(day) || isNaN(year)) {
-            console.error("Invalid date format:", dateStr);
-            return new Date(); // إرجاع تاريخ اليوم كبديل
-        }
         return new Date(year, month - 1, day);
     };
 
@@ -196,70 +187,79 @@ const HomeScreen: React.FC = () => {
         fetchUserData();
     }, []);
 
+  const fetchMedicinesForDate = async (day: number) => {
+    setLoading(true);
+    setTimeout(() => {
+        // إنشاء مصفوفة الأدوية بناءً على اليوم المحدد
+        const mockMedicines: MedicineData[] = [];
+        
+        // دواء أساسي لكل الأيام
+        mockMedicines.push({
+            id: "vitamin-d-" + day,
+            medicationName: "Vitamin D",
+            medicationType: "Drops",
+            dose: "1000 IU",
+            dosesPerDay: "1",
+            whenToTake: "Morning",
+            startDate: "05/01/2025",
+            endDate: "05/31/2025",
+            taken: day % 3 !== 0, // يتم تناوله كل يومين (لم يتم تناوله كل 3 أيام)
+            rating: 4
+        });
+
+        // دواء إضافي من 10 إلى 20 مايو
+        if (day >= 10 && day <= 20) {
+            mockMedicines.push({
+                id: "pain-reliever-" + day,
+                medicationName: "Ibuprofen",
+                medicationType: "Tablet",
+                dose: "200 mg",
+                dosesPerDay: "2",
+                whenToTake: "After Meal",
+                startDate: "05/10/2025",
+                endDate: "05/20/2025",
+                taken: day % 2 === 0, // يتم تناوله كل يومين
+                rating: 3
+            });
+        }
+
+        // دواء آخر من 15 مايو إلى نهاية الشهر
+        if (day >= 15) {
+            mockMedicines.push({
+                id: "antibiotic-" + day,
+                medicationName: "Amoxicillin",
+                medicationType: "Capsule",
+                dose: "500 mg",
+                dosesPerDay: "3",
+                whenToTake: "Every 8 Hours",
+                startDate: "05/15/2025",
+                endDate: "05/31/2025",
+                taken: true, // يتم تناوله بانتظام
+                rating: 5
+            });
+        }
+
+        // دواء إضافي في أيام محددة (يوم 5، 10، 15، 20، 25، 30)
+        // if ([5, 10, 15, 20, 25, 30].includes(day)) {
+        //     mockMedicines.push({
+        //         id: "special-med-" + day,
+        //         medicationName: "Multivitamin",
+        //         medicationType: "Tablet",
+        //         dose: "1 tablet",
+        //         dosesPerDay: "1",
+        //         whenToTake: "Evening",
+        //         startDate: "05/01/2025",
+        //         endDate: "05/31/2025",
+        //         taken: false, // لم يتم تناوله بعد
+        //         rating: 4
+        //     });
+        // }
+
+        setMedicines(mockMedicines);
+        setLoading(false);
+    }, 500);
+};
     useEffect(() => {
-        const fetchMedicinesForDate = async (day: number) => {
-            setLoading(true);
-            const user = auth.currentUser;
-            if (user) {
-                try {
-                    const selectedDateObj = new Date();
-                    selectedDateObj.setDate(day);
-                    selectedDateObj.setHours(0, 0, 0, 0); // تعيين الوقت إلى منتصف الليل
-
-                    const medicationRef = collection(db, "users", user.uid, "medication");
-                    const q = query(medicationRef);
-                    
-                    const querySnapshot = await getDocs(q);
-                    const medicinesArray: MedicineData[] = [];
-                    
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        if (!data.startDate || !data.endDate) {
-                            console.warn(`Medication ${doc.id} is missing start or end date`);
-                            return;
-                        }
-
-                        try {
-                            const medStartDate = parseFirestoreDate(data.startDate);
-                            const medEndDate = parseFirestoreDate(data.endDate);
-                            
-                            // تعيين الوقت للمقارنة الصحيحة
-                            medStartDate.setHours(0, 0, 0, 0);
-                            medEndDate.setHours(23, 59, 59, 999); // نهاية اليوم
-
-                            console.log(`Checking medication ${data.medicationName}:`);
-                            console.log(`Start: ${medStartDate}, End: ${medEndDate}, Selected: ${selectedDateObj}`);
-                            
-                            if (selectedDateObj >= medStartDate && selectedDateObj <= medEndDate) {
-                                medicinesArray.push({
-                                    id: doc.id,
-                                    medicationName: data.medicationName,
-                                    medicationType: data.medicationType,
-                                    dose: data.dose,
-                                    dosesPerDay: data.dosesPerDay,
-                                    whenToTake: data.whenToTake,
-                                    taken: data.taken,
-                                    rating: data.rating,
-                                    startDate: data.startDate,
-                                    endDate: data.endDate,
-                                    image: data.image || 'https://via.placeholder.com/150'
-                                });
-                            }
-                        } catch (error) {
-                            console.error(`Error processing medication ${doc.id}:`, error);
-                        }
-                    });
-                    
-                    console.log("Medications found:", medicinesArray);
-                    setMedicines(medicinesArray);
-                } catch (error) {
-                    console.error("Error fetching medicines:", error);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
-
         const today = new Date();
         setCurrentMonth(today.toLocaleString('default', { month: 'long' }));
         setCurrentYear(today.getFullYear());
@@ -267,64 +267,6 @@ const HomeScreen: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const fetchMedicinesForDate = async (day: number) => {
-            setLoading(true);
-            const user = auth.currentUser;
-            if (user) {
-                try {
-                    const selectedDateObj = new Date();
-                    selectedDateObj.setDate(day);
-                    selectedDateObj.setHours(0, 0, 0, 0);
-
-                    const medicationRef = collection(db, "users", user.uid, "medication");
-                    const q = query(medicationRef);
-                    
-                    const querySnapshot = await getDocs(q);
-                    const medicinesArray: MedicineData[] = [];
-                    
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        if (!data.startDate || !data.endDate) {
-                            console.warn(`Medication ${doc.id} is missing start or end date`);
-                            return;
-                        }
-
-                        try {
-                            const medStartDate = parseFirestoreDate(data.startDate);
-                            const medEndDate = parseFirestoreDate(data.endDate);
-                            
-                            medStartDate.setHours(0, 0, 0, 0);
-                            medEndDate.setHours(23, 59, 59, 999);
-
-                            if (selectedDateObj >= medStartDate && selectedDateObj <= medEndDate) {
-                                medicinesArray.push({
-                                    id: doc.id,
-                                    medicationName: data.medicationName,
-                                    medicationType: data.medicationType,
-                                    dose: data.dose,
-                                    dosesPerDay: data.dosesPerDay,
-                                    whenToTake: data.whenToTake,
-                                    taken: data.taken,
-                                    rating: data.rating,
-                                    startDate: data.startDate,
-                                    endDate: data.endDate,
-                                    image: data.image || 'https://via.placeholder.com/150'
-                                });
-                            }
-                        } catch (error) {
-                            console.error(`Error processing medication ${doc.id}:`, error);
-                        }
-                    });
-                    
-                    setMedicines(medicinesArray);
-                } catch (error) {
-                    console.error("Error fetching medicines:", error);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
-
         fetchMedicinesForDate(selectedDate);
     }, [selectedDate]);
 
@@ -451,7 +393,6 @@ const HomeScreen: React.FC = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
