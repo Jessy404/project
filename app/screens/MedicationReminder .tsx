@@ -40,8 +40,8 @@ const MedicationReminder = () => {
 
       {/* Abe */}
       <View style={{ marginBottom: 15 }}>
-        <Text style={{ fontWeight: 'bold' }}>Abe = 2.0 pills</Text>
-        <Text>Today at 11:59 pm</Text>
+        <Text style={{ fontWeight: 'bold' }}>Ibuprofen = 1.0 pill</Text>
+        <Text>Today at 01:00 pm</Text>
         <View style={{ flexDirection: 'row', marginTop: 5 }}>
           <TouchableOpacity style={{ marginRight: 10, padding: 5, backgroundColor: '#f0f0f0' }}>
             <Text>Skipped</Text>
@@ -54,8 +54,8 @@ const MedicationReminder = () => {
 
       {/* Alphatern Yesterday */}
       <View style={{ marginBottom: 15 }}>
-        <Text style={{ fontWeight: 'bold' }}>Alphatern = 1.0 pill</Text>
-        <Text>Yesterday at 08:00 am</Text>
+        <Text style={{ fontWeight: 'bold' }}>Lisinopril = 1.0 tablet</Text>
+        <Text>Today at 10:00 am</Text>
         <View style={{ flexDirection: 'row', marginTop: 5 }}>
           <TouchableOpacity style={{ marginRight: 10, padding: 5, backgroundColor: '#f0f0f0' }}>
             <Text>Skipped</Text>
@@ -67,9 +67,10 @@ const MedicationReminder = () => {
       </View>
 
       {/* Vitamin C Yesterday */}
+
       <View style={{ marginBottom: 15 }}>
-        <Text style={{ fontWeight: 'bold' }}>Vitamin c = 1.0 pill</Text>
-        <Text>Yesterday at 08:00 am</Text>
+        <Text style={{ fontWeight: 'bold' }}>Cetirizine = 1.0 tablet</Text>
+        <Text>Yesterday at 05:30 pm</Text>
         <Text>✅ Taken all</Text>
       </View>
 

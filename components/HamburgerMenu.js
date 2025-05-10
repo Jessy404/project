@@ -24,7 +24,7 @@ const fetchMedications = async () => {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      console.warn("⚠️ No medications found for this user!");
+      console.warn("⚠ No medications found for this user!");
     }
 
     const fetched = snapshot.docs.map((doc) => {
@@ -70,7 +70,7 @@ const fetchMedications = async () => {
   return (
     <View>
       <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <Text style={{ fontSize: 24 }}>🔔</Text>
+        <Text style={{ fontSize: 24  }}>🔔</Text>
       </TouchableOpacity>
 
       <Modal visible={modalVisible} transparent animationType="slide">

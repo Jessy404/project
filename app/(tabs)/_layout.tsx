@@ -86,7 +86,7 @@ export default function TabLayout() {
           tabBarLabel: "AI",
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center' }}>
-              {/* حاوية الأيقونتين فوق بعض */}
+          
               <View>
                 <FontAwesome5
                   name="capsules"
@@ -117,7 +117,7 @@ export default function TabLayout() {
             <View style={{ alignItems: 'center' }}>
               <Image 
                 source={{ 
-                  uri: 'https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg' 
+                  uri: 'https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg' 
                 }}
                 style={{
                   width: focused ? 30 : 28, 
