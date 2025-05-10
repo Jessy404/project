@@ -66,7 +66,7 @@ const MyInfo = () => {
 
       <View style={styles.profileContainer}>
         <Image
-          source={{ uri: profileImage }}
+          source={{ uri: profileImage || 'https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg' }}
           style={styles.profileImage}
         />
         <Text style={styles.changePhotoText}>Profile Picture</Text>
