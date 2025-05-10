@@ -4,45 +4,40 @@ import { useRouter } from 'expo-router';
 import { auth, db } from "../../config/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { getAuth, signOut } from "firebase/auth";
-import { FontAwesome5, MaterialIcons, Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome5, MaterialIcons, Ionicons, Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native'; 
 
 export default function Profile() {
-  interface UserData {
-    name?: string;
-    email?: string;
-    // Add other fields as needed
-  }
-
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const authInstance = getAuth();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const user = authInstance.currentUser;
-      if (user) {
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchUserData = async () => {
+        const user = authInstance.currentUser;
+        if (user) {
+          const docRef = doc(db, 'users', user.uid);
+          const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          const userData = docSnap.data();
-          if (userData && typeof userData === 'object') {
-            setUserData(userData);
+          if (docSnap.exists()) {
+            const userData = docSnap.data();
+            if (userData && typeof userData === 'object') {
+              setUserData(userData);
+            } else {
+              setUserData(null);
+            }
           } else {
-            console.log('Invalid data format');
             setUserData(null);
           }
-        } else {
-          console.log('No user data found');
-          setUserData(null);
         }
-      }
-      setLoading(false);
-    };
+        setLoading(false);
+      };
 
-    fetchUserData();
-  }, []);
+      fetchUserData();
+    }, [])      
+  );
 
   const handleLogout = async () => {
     try {
@@ -61,7 +56,7 @@ export default function Profile() {
     );
   }
 
-  const RenderOption: React.FC<{ icon: React.ReactElement; text: string; onPress: () => void; color?: string }> = ({ icon, text, onPress, color = "#10439F" }) => (
+  const RenderOption = ({ icon, text, onPress, color = "#062654" }) => (
     <TouchableOpacity style={styles.optionRow} onPress={onPress}>
       <View style={styles.optionContent}>
         {React.cloneElement(icon, { color })}
@@ -76,7 +71,7 @@ export default function Profile() {
       <View style={styles.headerBackground} />
       <View style={styles.avatarContainer}>
         <Image
-          source={{ uri: 'https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg' }}
+          source={{ uri: userData?.photoURL || 'https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg' }}
           style={styles.avatar}
         />
       </View>
@@ -90,18 +85,13 @@ export default function Profile() {
       />
 
       <RenderOption
-        icon={<FontAwesome5 name="capsules" size={20} />}
+        icon={<FontAwesome5 name="pills" size={20} />}
         text="My Medications"
         onPress={() => router.push('/screens/my_medication')}
       />
 
       <RenderOption
-        icon={
-          <MaterialCommunityIcons
-            name={"lightning-bolt"}
-            color={"#062654"}
-            size={32}
-          />}
+        icon={<Ionicons name="trophy-outline" size={22} />}
         text="My Challenges"
         onPress={() => router.push('/screens/challenge')}
       />
@@ -117,11 +107,6 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   wrapper: {
     flex: 1,
     backgroundColor: '#FFF',
@@ -180,14 +165,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
     marginLeft: 10,
+    color: '#062654',
   },
   chevron: {
     marginLeft: 10,
   },
-  logoutButton: {
-    display: 'none', // hide the old button style
+  logoutOption: {
+    backgroundColor: '#F5F5F5',
+    width: '85%',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  logoutText: {
-    display: 'none',
+  logoutContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  logoutIcon: {
+    marginRight: 15,
+  },
+  logoutTextStyle: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    marginLeft: 10,
+    color: '#E63946',
   },
 });
