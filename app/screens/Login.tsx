@@ -217,7 +217,7 @@ export default function LoginScreen() {
 
                 <Text style={styles.orText}>Or sign in with</Text>
                 <View style={styles.socialIcons}>
-                    <Ionicons name="logo-facebook" size={28} color="#3b5998" />
+                  
                    <TouchableOpacity onPress={() => promptAsync()}> <Ionicons name="logo-google" size={28} color="#db4437" /> </TouchableOpacity>
                 </View>
 
