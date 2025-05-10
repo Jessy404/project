@@ -99,7 +99,7 @@ export default function Profile() {
         icon={
           <MaterialCommunityIcons
             name={"lightning-bolt"}
-            color={"#E63946"}
+            color={"#062654"}
             size={32}
           />}
         text="My Challenges"
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     marginTop: 10,
-    color: '#10439F',
+    color: '#062654',
   },
   email: {
     fontSize: 14,
