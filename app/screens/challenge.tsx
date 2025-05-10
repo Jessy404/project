@@ -14,15 +14,19 @@ interface Challenge {
   maxUsers?: number;
 }
 
+interface UserData {
+  points: number;
+}
+
 const ChallengeScreen: React.FC = () => {
   const [challengeList, setChallengeList] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [userPoints, setUserPoints] = useState<number>(0);
 
   const challenges: Challenge[] = [
     { id: "1", title: "Drink 2 liters of water 💧", icon: "water", rating: 0, maxUsers: 5 },
     { id: "2", title: "Eat 5 servings of fruits 🍎", icon: "nutrition", rating: 0, maxUsers: 3 },
     { id: "3", title: "Sleep for 7 hours 😴", icon: "bed", rating: 0 },
-    // باقي التحديات بنفس الشكل...
   ];
 
   const uploadChallengesToFirestore = async () => {
@@ -37,9 +41,26 @@ const ChallengeScreen: React.FC = () => {
     }
   };
 
+  const fetchUserPoints = async () => {
+    const userId = getAuth().currentUser?.uid;
+    if (!userId) return;
+
+    const userDocRef = doc(db, "users", userId);
+    const snap = await getDoc(userDocRef);
+
+    if (snap.exists()) {
+      const data = snap.data() as UserData;
+      setUserPoints(data.points || 0);
+    } else {
+      await setDoc(userDocRef, { points: 0 });
+      setUserPoints(0);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       await uploadChallengesToFirestore();
+      await fetchUserPoints();
       try {
         const snapshot = await getDocs(collection(db, "challenges"));
         const data = snapshot.docs.map(doc => ({
@@ -60,13 +81,23 @@ const ChallengeScreen: React.FC = () => {
     if (!userId) return;
 
     const challengeDocRef = doc(db, "challenges", challengeId);
+    const userDocRef = doc(db, "users", userId);
     const snap = await getDoc(challengeDocRef);
+    const userSnap = await getDoc(userDocRef);
+
     const data = snap.data() as Challenge;
     const joinedUsers = data.joinedUsers || [];
 
     if (!joinedUsers.includes(userId) && (!data.maxUsers || joinedUsers.length < data.maxUsers)) {
       joinedUsers.push(userId);
       await updateDoc(challengeDocRef, { joinedUsers });
+
+      const currentPoints = userSnap.exists() ? (userSnap.data() as UserData).points || 0 : 0;
+      const newPoints = currentPoints + 10;
+
+      await setDoc(userDocRef, { points: newPoints }, { merge: true });
+      setUserPoints(newPoints);
+
       setChallengeList(prev =>
         prev.map(ch =>
           ch.id === challengeId ? { ...ch, joinedUsers } : ch
@@ -110,16 +141,20 @@ const ChallengeScreen: React.FC = () => {
     <View style={{ flex: 1, backgroundColor: "#fff", paddingBottom: 80 }}>
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Challenges</Text>
-        <Image
-          source={{ uri: "https://i.pinimg.com/736x/19/49/6b/19496bd082a517c236cbb4649608c541.jpg" }}
-          style={styles.headerImage}
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.pointsText}>{userPoints} Points </Text>
+          <Image
+            source={{ uri: "https://i.pinimg.com/736x/3d/2f/ee/3d2feefd357b3cfd08b0f0b27b397ed4.jpg" }}
+            style={styles.headerImage}
+          />
+        </View>
       </View>
       <FlatList
         data={challengeList}
         renderItem={renderChallengeItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20 }}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -141,6 +176,13 @@ const styles = StyleSheet.create({
   headerImage: {
     width: 40,
     height: 40,
+    borderRadius: 20,
+  },
+  pointsText: {
+    marginRight: 10,
+    fontSize: 18,
+    color: "#062654",
+    fontWeight: "600",
   },
   challengeItem: {
     flexDirection: "row",
