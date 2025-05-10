@@ -1,79 +1,126 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { FontAwesome } from "@expo/vector-icons";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { FontAwesome5, FontAwesome } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../config/firebaseConfig";
 
-const MedicineItem = ({ name, type, image, time, dose, schedule, status }) => {
-  const [isTimeForMedication, setIsTimeForMedication] = useState(false);
 
-  useEffect(() => {
+
+const MedicineItem = ({ item }) => {
+  const router = useRouter();
+
+  const handleViewMedication = () => {
+    router.push({ pathname: "/screens/MedicationDetail", params: { id: item.docID } });
+  };
+
+  const handleTaken = async () => {
+    try {
+      const docRef = doc(db, "medication", item.docID);
+      await updateDoc(docRef, {
+        taken: true,
+      });
+    } catch (error) {
+      console.error("Error updating document: ", error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteDoc(doc(db, "medication", item.docID));
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+    }
+  };
+
+  const handleRating = async (rating) => {
+    try {
+      const docRef = doc(db, "medication", item.docID);
+      await updateDoc(docRef, {
+        rating,
+      });
+    } catch (error) {
+      console.error("Error updating rating: ", error);
+    }
+  };
+
+  const getNextDoseTime = (dosesPerDay) => {
     const now = new Date();
-    // محاولة التعامل مع الوقت بشكل صحيح
-    const [medHour, medMinute] = time.replace(/[APM]/gi, '').split(':').map(Number);
-    const isPM = time.includes('PM') && medHour !== 12;
-    const isAM12 = time.includes('AM') && medHour === 12;
-    const hour24 = isAM12 ? 0 : (isPM ? medHour + 12 : medHour);
+    const doseTimes = [];
+    const intervalInMinutes = (24 * 60) / dosesPerDay;
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
 
-    const medicationTime = new Date();
-    medicationTime.setHours(hour24, medMinute, 0, 0);
-
-    // التأكد من التاريخ صالح
-    if (isNaN(medicationTime.getTime())) {
-      console.error("Invalid medication time:", time);
-      return;
+    for (let i = 0; i < dosesPerDay; i++) {
+      const doseTime = new Date(startOfDay.getTime() + i * intervalInMinutes * 60000);
+      doseTimes.push(doseTime);
     }
 
-    const timeDiff = Math.abs(now.getTime() - medicationTime.getTime());
-    const isWithin30Minutes = timeDiff <= 30 * 60 * 1000;
-
-    setIsTimeForMedication(isWithin30Minutes);
-
-    if (isWithin30Minutes && status !== 'done') {
-      console.log(`Time to take ${name}!`);
+    for (let dose of doseTimes) {
+      if (dose > now) {
+        return dose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
     }
-  }, [time, status, name]);
+
+    const nextDayDose = new Date(doseTimes[0].getTime());
+    nextDayDose.setDate(nextDayDose.getDate() + 1);
+    return nextDayDose.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
-    <View style={styles.medicineItemContainer}>
-      <Image source={{ uri: image }} style={styles.medicineImage} resizeMode="contain" />
-      <View style={styles.medicineDetails}>
-        <View style={styles.medicineHeader}>
-          <Text style={styles.medicineName}>{name} ({type})</Text>
-          {status === "done" ? (
-            <MaterialCommunityIcons name="check-circle" size={24} color="#34A853" />
-          ) : (
-            <MaterialCommunityIcons
-              name={isTimeForMedication ? "bell-ring" : "alert-circle"}
-              size={24}
-              color={isTimeForMedication ? "#FFA000" : "#062654"}
-            />
+    <View style={styles.card}>
+      <View style={styles.cardContent}>
+        <View style={styles.header}>
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+            <Text style={styles.medName}>
+              {item.medicationName} <Text style={styles.medType}>({item.medicationType})</Text>
+            </Text>
+          </View>
+          {item.taken && (
+            <FontAwesome name="check-circle" size={22} color="#4CAF50" style={{ marginLeft: 10 }} />
           )}
+          <FontAwesome5 name="pills" size={24} color="#2265A2" style={{ marginLeft: 10 }} />
         </View>
 
-        <View style={styles.medicineInfoRow}>
-          <MaterialCommunityIcons name="clock-outline" size={18} color="#ffffff" />
-          <Text style={styles.medicineInfoText}>{time}</Text>
-        </View>
-
-        <View style={styles.medicineInfoRow}>
-          <MaterialCommunityIcons name="pill" size={18} color="#ffffff" />
-          <Text style={styles.medicineInfoText}>{dose}</Text>
-        </View>
-
-        <View style={styles.medicineInfoRow}>
-          <MaterialCommunityIcons name="calendar-clock" size={18} color="#ffffff" />
-          <Text style={styles.medicineInfoText}>{schedule}</Text>
-        </View>
+        <Text style={styles.details}>Dose: {item.dose}</Text>
+        <Text style={styles.details}>Next Dose: {getNextDoseTime(item.dosesPerDay)}</Text>
+        <Text style={styles.details}>dosesPerDay: {item.dosesPerDay}</Text>
 
         <View style={styles.ratingContainer}>
           {[1, 2, 3, 4, 5].map((star) => (
-            <FontAwesome
-              key={star}
-              name={star <= 3 ? "star" : "star-o"}
-              size={16}
-              color="#FFD700"
-            />
+            <TouchableOpacity key={star} onPress={() => handleRating(star)}>
+              <FontAwesome
+                name={(item.rating ?? 0) >= star ? "star" : "star-o"}
+                size={18}
+                color={(item.rating ?? 0) >= star ? "#FFD700" : "#CCC"}
+              />
+            </TouchableOpacity>
           ))}
+        </View>
+
+        <View style={styles.buttons}>
+          {!item.taken && (
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#062654" }]}
+              onPress={handleTaken}
+            >
+              <Text style={styles.btnText}>Taken</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[styles.button, styles.edit]}
+            onPress={handleViewMedication}
+          >
+            <Text style={styles.btnText}>View</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.delete]}
+            onPress={handleDelete}
+          >
+            <Text style={styles.btnText}>Delete</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -81,56 +128,68 @@ const MedicineItem = ({ name, type, image, time, dose, schedule, status }) => {
 };
 
 const styles = StyleSheet.create({
-  medicineItemContainer: {
-    flexDirection: "row",
-    backgroundColor: "#062654",
-    borderRadius: 16,
-    padding: 16,
-    marginRight: 16,
-    width: 300,
+  card: {
+    backgroundColor: "#FFF",
+    padding: 10,
+    borderRadius: 20,
+    marginBottom: 15,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    alignItems: "center",
-    marginVertical: 10,
-    marginHorizontal: 10,
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  medicineImage: {
-    width: 70,
-    height: 70,
-    marginRight: 16,
+  cardContent: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    marginBottom: 10,
   },
-  medicineDetails: {
-    flex: 1,
-  },
-  medicineHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  medicineName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
-    fontFamily: 'Inter-SemiBold',
-  },
-  medicineInfoRow: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 10,
   },
-  medicineInfoText: {
+  medName: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#2265A2",
+    marginRight: 10,
+  },
+  medType: {
+    fontSize: 18,
+    color: "#555",
+  },
+  details: {
     fontSize: 14,
-    color: "#ffffff",
-    marginLeft: 8,
-    fontFamily: 'Inter-Regular',
+    color: "#555",
+    marginBottom: 5,
   },
   ratingContainer: {
     flexDirection: "row",
-    marginTop: 8,
+    marginTop: 10,
+  },
+  buttons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+  edit: {
+    backgroundColor: "#062654",
+  },
+  delete: {
+    backgroundColor: "#062654",
+  },
+  btnText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });
 
