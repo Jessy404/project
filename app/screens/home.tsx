@@ -273,13 +273,7 @@ useEffect(() => {
                             keyExtractor={(med) => med.id}
                             renderItem={({ item: med }) => (
                                 <MedicineItem
-                                    name={med.name}
-                                    type={med.type}
-                                    image={med.image}
-                                    time={med.time}
-                                    dose={med.dose}
-                                    schedule={med.schedule}
-                                    status={med.status}
+                                    item={med}
                                 />
                             )}
                             showsHorizontalScrollIndicator={false}
