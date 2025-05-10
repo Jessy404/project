@@ -22,6 +22,7 @@ import { Animated } from "react-native";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 import { getAuth } from "firebase/auth";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 interface Medication {
   medicationName: string;
@@ -32,6 +33,7 @@ interface Medication {
   endDate: string;
   reminderType: string;
   dosesPerDay: string; // Added dosesPerDay property
+   imageUrl?: string; 
 }
 
 const AddNewMedication = () => {
@@ -79,8 +81,54 @@ const AddNewMedication = () => {
     };
     animateArrow();
   }, [moveLeft, moveBack]);
+const [imageUrl, setImageUrl] = useState<string>("");
 
-  const saveMedication = async () => {
+const handleImageUpload = async () => {
+  if (!imageUrl.trim()) {
+    alert("Please enter a valid image URL!");
+    return;
+  }
+
+  const storage = getStorage();
+  const storageRef = ref(storage, "images/" + Date.now());
+
+  try {
+    const response = await fetch(imageUrl);
+
+    if (!response.ok) {
+      alert("Invalid image URL or image not found!");
+      return;
+    }
+
+    const blob = await response.blob();
+    
+    const uploadTask = uploadBytesResumable(storageRef, blob);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        
+      },
+      (error) => {
+        console.error("Error uploading image: ", error);
+      },
+      async () => {
+        
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        console.log("File available at: ", downloadURL);
+
+        
+        saveMedication(downloadURL);
+      }
+    );
+  } catch (error) {
+    console.error("Error fetching image: ", error);
+  }
+};
+
+
+
+  const saveMedication = async (downloadURL: string) => {
     const docID = Date.now().toString();
     const userEmail = auth.currentUser?.email;
 
@@ -116,7 +164,9 @@ const AddNewMedication = () => {
             startDate,
             endDate,
             dosesPerDay,
-            reminderType: ""
+            reminderType: "",
+            imageUrl: downloadURL,  
+
           };
 
           try {
@@ -133,6 +183,8 @@ const AddNewMedication = () => {
             setStartDate("");
             setEndDate("");
             setReminderType("");
+            setImageUrl(""); 
+
             Toast.show({
               type: "success",
               position: "top",
@@ -238,10 +290,20 @@ const AddNewMedication = () => {
       </TouchableOpacity>
 
       {reminderType ? <Text style={{ marginBottom: 10, color: '#2265A2' }}>Reminder: {reminderType}</Text> : null}
+      <View style={styles.inputWrapper}>
+  <Ionicons name="image" size={24} color="#2265A2" style={styles.iconLeft} />
+  <TextInput
+    style={styles.input}
+    placeholder="Enter Image URL"
+    value={imageUrl}
+    onChangeText={setImageUrl} 
+  />
+</View>
 
-      <TouchableOpacity style={styles.saveButton} onPress={saveMedication}>
-        <Text style={styles.saveButtonText}>Save Medication</Text>
-      </TouchableOpacity>
+      <TouchableOpacity style={styles.saveButton} onPress={handleImageUpload}>
+  <Text style={styles.saveButtonText}>Save Medication</Text>
+</TouchableOpacity>
+
 
       {/* Medication Type Modal */}
       <Modal visible={isModalVisible} transparent animationType="slide">
